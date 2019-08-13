@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<!-- 
+https://github.com/vahaduo/
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VahaduoJS 19.08.0</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0px;
+      background-color: #555;
+      font-size: calc(0.5vw + 12px);
+      font-family: sans-serif;
+      color: #dadada;
+    }
+    nav {
+      width: 100%;
+      background-color: #ccc;
+      background-image: linear-gradient(#ccc, #ddd);
+      padding-top: 0.4em;
+      padding-left: 0.4em;
+      box-sizing: border-box;
+    }
+    button {
+      outline: none;
+      border: none;
+      margin: 0px;
+      cursor: pointer;
+      color: inherit;
+    }
+    .tablink {
+      text-transform: uppercase;
+      padding: 0.5em;
+      font-size: 1em;
+      line-height: 1.4;
+      background-color: #555;
+    }
+    .inactive {
+      background: none;
+      color: #666;
+    }
+    .inactive:focus, .inactive:hover {
+      background-color: #999;
+    }
+    .buttons {
+      box-sizing: border-box;
+      border: none;
+      padding: 0.7em;
+      margin-bottom: 0.7em;
+      font-size: 0.7em;
+      color: inherit;
+      text-transform: uppercase;
+      background-color: #444;
+      box-shadow: 2px 2px #333;
+    }
+    .buttons:focus, .buttons:hover {
+      background-image: linear-gradient(#444, #525252);
+    }
+    .buttons:active {
+      color: #555;
+      background-color: #999;
+      background-image: none;
+    }
+    #runmulti:disabled {
+      display: none;
+    }
+    .tabinput {
+      box-sizing: border-box;
+      border: none;
+      margin: 0px;
+      outline: 0px;
+      padding: 1em;
+      height: calc(100% - 4em);
+      min-height: 4em;
+      width: 100%;
+      overflow: auto;
+      resize: none;
+      color: inherit;
+      font-size: 0.7em;
+      white-space: pre;
+      background: none;
+      box-shadow: 0 3px #333;
+    }
+    #notification {
+      font-size: 0.7em;
+      box-sizing: border-box;
+      margin: 0.7em;
+      padding: 0.5em;
+      width: calc(100%-1.4em);
+      cursor: pointer;
+      display: none;
+    }
+    #notification::before {
+      content: "×";
+      font-weight: bold;
+      margin-right: 1em;
+    }
+    #multioutput {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 0.7em;
+    }    
+    .flexcontainer {
+      display: flex;
+      width: 100%;
+    }
+    .panel {
+      flex-grow: 1;
+      box-sizing: border-box;
+      padding: 1em;
+    }
+    .rightpanel {
+      max-width: 30em;
+    }
+    .leftpanel {
+      flex-shrink: 0;
+      flex-basis: 50%;
+    }
+    .buttonmulti {
+      min-width: 13em;
+      margin: 1em 0 0 1em;
+    }
+    .multiclearok {
+      width: 4em;
+      margin: 1em 0 0 1em;
+    }
+    .multiclearcancel {
+      width: 8.5em;
+      margin: 1em 0 0 0.5em;
+    }
+    .button100 {
+      width: 100%;
+    }
+    .button80 {
+      width: 80%;
+    }
+    .button20 {
+      width: 19%;
+      margin-right: 1%;
+    }
+    .input20 {
+      text-align: center;
+      width: 20%;
+      background-color: #333;
+      outline: 0px;
+    }
+    .input20:focus, .input20:hover {
+      background-image: none;
+    }
+    #distancetargets > button, #singletargets > button {
+      text-transform: none;
+    }
+    table {
+      font-size: 0.7em;
+      border-spacing: 0em;
+    }
+    .distances td, .distances th {
+      text-align: right;
+    }
+    .distances td:nth-of-type(2), .distances th:nth-of-type(2) {
+      text-align: left;
+      padding-left: 0.7em;
+    }
+    .distances th {
+      padding-bottom: 0.7em;
+    }
+    hr {
+      border: 0px;
+      border-top: 1px solid #333;
+      margin: 0em 0em 1.4em 0em;
+    }
+    .leftpanel hr:last-of-type, #multioutput hr:last-of-type{
+      display: none;
+    }
+    .barchartmode2 + td {
+      padding-left: 0.7em;
+    }
+    .barchartmode2 {
+      min-width: 8em;
+    }
+    .barchartmode1 {
+      width: 100%;
+      height: 0.5em;
+      box-shadow: inset 1px 1px 0px 0px #444;
+    }
+    .nonselectable {
+      -moz-user-select: none;
+      user-select: none;
+    }
+    .singleheader {
+      text-align: left;
+      width: 100%;
+      padding-bottom: 0.7em;
+    }
+    .singleleftcolumn {
+      text-align: right;
+      padding-right: 0.7em
+    }
+    .singlerightcolumn {
+      text-align: left;
+      width: 100%;
+    }
+    .multitablewrapper {
+      overflow-x: auto;
+      padding-bottom: 1em;
+    }
+    .multisources {
+      vertical-align: bottom;
+      white-space: nowrap;
+    }
+    .multisources div {
+      width: 1em;
+      transform: translate(1.5em, -0.5em) rotate(315deg);
+    }
+    .multisources span, .multiheader span {
+      cursor: pointer;
+    }
+    .multiresult {
+      min-width: 2em;
+      padding: 0.7em;
+      color: white;
+      text-align: right;
+    }
+    .multiheader {
+      text-align: center;
+      vertical-align: bottom;
+      padding-bottom: 0.5em;
+    }
+    .multitargets {
+      padding-right: 1em;
+      text-align: right;
+      cursor: pointer;
+    }
+    .multidistance {
+      padding: 0.7em;
+      background-color: #777;
+    }
+    .multidistchart {
+      padding: 0em;
+      min-width: 6em;
+    }
+    @media only screen and (max-width: 639px) {
+      .flexcontainer {
+        flex-direction: column-reverse;
+      }
+      .rightpanel {
+        max-width: none;
+      }
+    }
+  </style>
+  <script>
+    let inputHasChanged = false, sourceArray, targetArray, 
+      sourceNum, targetNum, dimensions, addGradient = true, 
+      printZeroes = false, aggregate = true, addBarChart = 1;
+      printZeroesMulti = false, aggregateMulti = true, 
+      fastModeMulti = false;
+    
+    function showNotification (message, error = 0) {
+      const notification = document.getElementById("notification");
+      notification.innerHTML = message;
+      notification.style.display = "block";
+      if (error) {
+        notification.style.backgroundColor = "red";
+        notification.style.color = "white";
+      } else {
+        notification.style.backgroundColor = "yellow";
+        notification.style.color = "#666";
+      }
+    }
+    
+    function clearNotification () {
+      const elmnt = document.getElementById("notification");
+      elmnt.innerHTML = "";
+      elmnt.style.display = "none";
+    }
+    
+    function clearOutput (elmnt, action, display = "block") {
+      if (action == "confirm") {
+        elmnt.nextElementSibling.style.display = display;
+        elmnt.style.display = "none";
+      } else if (action == "cancel") {
+        elmnt.parentNode.previousElementSibling.style.display = display;
+        elmnt.parentNode.style.display = "none";
+      } else {
+        document.getElementById(action).innerHTML = "";
+        elmnt.parentNode.previousElementSibling.style.display = display;
+        elmnt.parentNode.style.display = "none";
+      }
+    }
+        
+    function toggleOptions (option, elmnt) {
+      let msg;
+      function toggleOption (currentValue, msg) {
+        if (currentValue) {
+          elmnt.innerHTML = msg + "no";
+        } else {
+          elmnt.innerHTML = msg + "yes";
+        }
+      }
+      switch (option) {
+        case "printZeroes":
+          toggleOption(printZeroes, "print&nbsp;zeroes&nbsp;-&nbsp;");
+          printZeroes = !printZeroes;
+          break;
+        case "aggregate":
+          toggleOption(aggregate, "aggregate&nbsp;-&nbsp;");
+          aggregate = !aggregate;
+          break;
+        case "printZeroesMulti":
+          toggleOption(printZeroesMulti, "print&nbsp;zeroes&nbsp;-&nbsp;");
+          printZeroesMulti = !printZeroesMulti;
+          break;
+        case "aggregateMulti":
+          toggleOption(aggregateMulti, "aggregate&nbsp;-&nbsp;");
+          aggregateMulti = !aggregateMulti;
+          break;
+        case "fastModeMulti":
+          toggleOption(fastModeMulti, "fast&nbsp;mode&nbsp;-&nbsp;");
+          fastModeMulti = !fastModeMulti;
+          break;
+        case "addBarChart":
+          addBarChart == 2 ? addBarChart = 0 : addBarChart += 1;
+          msg = (addBarChart == 0 ? "no" : "mode&nbsp;" + addBarChart);
+          elmnt.innerHTML = "add&nbsp;bar&nbsp;chart&nbsp;-&nbsp;" + msg;
+          break;
+        case "addGradient":
+          msg = "add&nbsp;gradient&nbsp;-&nbsp;";
+          if (addGradient) {
+            elmnt.nextElementSibling.style.display = "none";
+            elmnt.innerHTML = msg + "no";
+          } else {
+            elmnt.nextElementSibling.style.display = "block";
+            elmnt.innerHTML = msg + "yes";
+          }
+          addGradient = !addGradient;
+          break;
+      }
+    }
+    
+    function validateDistMaxOut (elmnt) {
+      const nextValue = Number(elmnt.value.replace(/\,/g,'\.'));
+      if (Number.isInteger(nextValue) && nextValue > 0) {
+        elmnt.value = nextValue;
+      } else {
+        elmnt.value = elmnt.defaultValue;
+      }
+    }
+    
+    function validateGradFromTo (elmnt) {
+      const nextValue = Number(elmnt.value.replace(/\,/g,'\.'));
+      if (isNaN(nextValue) || nextValue < 0) {
+        elmnt.value = elmnt.defaultValue;
+      } else {
+        elmnt.value = nextValue;
+      }
+    }
+    
+    function dispatcher (elmnt, targetId) {
+      if (elmnt.parentNode.id == "distancetargets") {
+        distances(targetId);
+      } else {
+        singleFMC(targetId);
+      }
+    }
+    
+    function randomFromRange (min, max) {
+      return Math.floor(Math.random() * (max - min) ) + min;
+    }
+    
+    function subArray (arr1, arr2) {
+      const subtracted = arr1.map(function (elmnt, index) {
+        return elmnt - arr2[index];
+      });
+      return subtracted;
+    }
+    
+    function addArray (arr1, arr2) {
+      const added = arr1.map(function (elmnt, index) {
+        return elmnt + arr2[index];
+      });
+      return added;
+    }    
+    
+    function getArraySum (arr) {
+      function arrSum (total, num) {
+        return total + num;
+      }
+      return arr.reduce(arrSum);
+    }
+
+    function squareArray (arr) {
+      const squared = arr.map(function (elmnt) {
+        return elmnt * elmnt;
+      });
+      return squared;
+    }
+    
+    function distances (targetId) {
+      let i, n, output = "", resultsNum, getDistance, distanceCurrent, 
+        gradStyle1 = "", gradStyle2 = "", gradHSL = "", 
+        distMaxOut = document.getElementById("distmaxout").value;
+      const target = targetArray[targetId].slice(), 
+        distances = Array(sourceNum).fill([]), 
+        gradFrom = document.getElementById("gradfrom").value, 
+        gradTo = document.getElementById("gradto").value; 
+      for (i = 0; i < sourceNum; i++) {
+        getDistance = subArray(target, sourceArray[i]);
+        getDistance.shift();
+        getDistance = squareArray(getDistance);
+        getDistance = getArraySum(getDistance);
+        getDistance = Math.sqrt(getDistance);
+        distances[i] = distances[i].concat(sourceArray[i][0]);
+        distances[i].push(getDistance);
+      }
+      distances.sort(function(a, b) {
+        return a[1] - b[1];
+      });
+      resultsNum = sourceNum;
+      if (target[0] === distances[0][0]) {
+        distances.shift();
+        resultsNum--;
+      }
+      if (resultsNum < distMaxOut) {
+       distMaxOut = resultsNum;
+      }
+      if (addGradient) {
+        gradStyle1 = ' style="color:black;background-color:hsl(';
+        gradStyle2 = ', 100%, 50%)"';
+      }
+      output += '<table class="distances"><tr><th>Distance&nbsp;to:</th><th>' + target[0] + "</th>";
+      for (i = 0; i < distMaxOut; i++) {
+        distanceCurrent = distances[i][1].toFixed(8);
+        if (addGradient) {
+          if (distanceCurrent < gradFrom) {
+            gradHSL = 120;
+          } else if (distanceCurrent > gradTo) {
+            gradHSL = 240;
+          } else {
+            gradHSL = 120 -(((distanceCurrent - gradFrom) / (gradTo - gradFrom)) * 240);
+          }
+        }
+        output += "<tr><td" + gradStyle1 + gradHSL + gradStyle2 + ">" + distanceCurrent + "</td><td>" + distances[i][0] + "</td></tr>";
+      }
+      output += "</table>";
+      printOutput(output, "distanceoutput");
+    }
+    
+    function prepareTarget (targetId, slots) {
+      let i;
+      const target = targetArray[targetId].slice();
+      target.shift();
+      for (i = 0; i < dimensions; i++) {
+        target[i] = target[i] / slots;
+      }
+      return target;
+    }
+    
+    function prepareSource (slots) {
+      let i, j, tempLine;
+      const source = Array(sourceNum);
+      for (i = 0; i < sourceNum; i++) {
+        tempLine = sourceArray[i].slice();
+        tempLine.shift();
+        source[i] = tempLine.slice();
+        for (j = 0; j < dimensions; j++) {
+          source[i][j] = source[i][j] / slots;
+        }
+      }
+      return source;
+    }
+    
+    function fastMonteCarlo (target, source, targetId, slots) {
+      let i, j, tempLine, currentSlots, currentPoint, currentDistance, 
+        nextSlots, nextPoint, nextDistance, result; 
+      const cycles = sourceNum * 2, scores = Array(sourceNum).fill(0);
+      for (i = 0; i < sourceNum; i++) {
+        source[i] = subArray(source[i], target);
+      }
+
+      function randomizedSlots () {
+        let i;
+        const newSlots = Array(slots);
+        for (i = 0; i < slots; i++) {
+          newSlots[i] = randomFromRange(0, sourceNum);
+        }
+        return newSlots;
+      }
+      
+      function buildPoint (fromSlots) {
+        let i, tempLine, newPoint = Array(dimensions).fill(0);
+        for (i = 0; i < slots; i++) {
+          tempLine = source[fromSlots[i]].slice();
+          newPoint = addArray(newPoint, tempLine);
+        }
+        return newPoint;
+      }
+      
+      function distance (fromPoint) {
+        let dist = squareArray(fromPoint);
+        dist = getArraySum(dist);
+        return dist;
+      }
+      
+      currentSlots = randomizedSlots();
+      currentPoint = buildPoint(currentSlots);
+      currentDistance = distance(currentPoint);
+      for (i = 0; i < cycles; i++) {
+        nextSlots = randomizedSlots();
+        for (j = 0; j < slots; j++) {
+          nextPoint = subArray(currentPoint, source[currentSlots[j]]);
+          nextPoint = addArray(nextPoint, source[nextSlots[j]]);
+          nextDistance = distance(nextPoint);
+          if (nextDistance < currentDistance) {
+            currentSlots[j] = nextSlots[j];
+            currentPoint = nextPoint;
+            currentDistance = nextDistance;
+          }
+        }
+     }
+      for (i = 0; i < slots; i++) {
+        scores[currentSlots[i]] += 1;
+      }
+      for (i = 0; i < sourceNum; i++) {
+        scores[i] =  scores[i] / slots;
+      }
+      result = {
+        target: targetId,
+        distance: Math.sqrt(currentDistance),
+        scores: scores
+      };
+      return result;
+    }
+    
+    function multiFMC () {
+      let i, j, source, target, slots, resultsTable = Array(sourceNum), 
+        sourceNumLocal = sourceNum, outputMsg, tempLine, averageResult, 
+        currentResult, longestSourceName = 0, averageDistance = 0, 
+        minDistance, maxDistance, currentDistance, names = "", 
+        namesDiv, namesCompStyle, namesOffset;
+      const results = Array(targetNum);
+      slots = (fastModeMulti ? 125 : 500);
+      for (i = 0; i < targetNum; i++) {
+        source = prepareSource(slots);
+        target = prepareTarget(i, slots);
+        results[i] = fastMonteCarlo(target, source, i, slots);
+      }
+      for (i = 0; i < sourceNum; i++) {
+        resultsTable[i] = Array(targetNum + 1);
+        resultsTable[i][0] = sourceArray[i][0];
+        for (j = 0; j < targetNum; j++) {
+          resultsTable[i][j + 1] = results[j].scores[i];
+        }
+      }
+      if (aggregateMulti) {
+        resultsTable = aggregateResults(resultsTable, sourceNumLocal);
+        sourceNumLocal = resultsTable.length;
+      }
+      
+      function returnHSL (currentResult) {
+        if (currentResult == 0) {
+          return '#444455';
+        } else {
+          return 'hsl(' + (225 - 35 * currentResult) + ', ' + (25 + 70 * currentResult) + '%, ' + (45 * currentResult + 35) + '%)';
+        }
+      }
+      
+      function returnDistChart (currentDistance, maxDistance, minDistance, averageDistance) {
+        let averageDistancePct, currentDistancePct;
+        if (maxDistance == minDistance) {
+          maxDistance = 1;
+          minDistance = 0;
+          averageDistance = 0.5;
+          currentDistance = 0.5;
+        }
+        function getDistancePct (distance) {
+          return ((distance - minDistance) / (maxDistance - minDistance)) * 80;
+        }
+        averageDistancePct = getDistancePct(averageDistance);
+        currentDistancePct = getDistancePct(currentDistance);
+        return '<td class="nonselectable multidistchart" style="background-image: linear-gradient(90deg, #777 ' + (averageDistancePct + 3) + '%, #999 '+ (averageDistancePct + 3) +'%, #999 '+ (averageDistancePct + 7) + '%, #777 ' + (averageDistancePct + 7) + '%);"><div style="padding-left: ' + (((currentDistancePct + 5) * 6 / 100) - 0.3) + 'em">&#8226;</div></td>';
+      }
+      
+      averageResult = Array(sourceNumLocal).fill(0);
+      minDistance = results[0].distance;
+      maxDistance = results[0].distance;
+      for (i = 0; i < targetNum; i++) {
+        currentDistance = results[i].distance;
+        averageDistance += currentDistance;
+        if (currentDistance > maxDistance) {
+          maxDistance = currentDistance;
+        }
+        if (currentDistance < minDistance) {
+          minDistance = currentDistance;
+        }
+        for (j = 0; j < sourceNumLocal; j++) {
+          averageResult[j] += resultsTable[j][i + 1];
+        }
+      }
+      averageDistance = (averageDistance / targetNum).toFixed(8);
+      if (!printZeroesMulti) {
+        for (i = sourceNumLocal - 1; i > -1; i--) {
+          if (averageResult[i] == 0) {
+            resultsTable.splice(i, 1);
+            averageResult.splice(i, 1);
+          }
+        }
+        sourceNumLocal = resultsTable.length;
+      }
+      for (i = 0; i < sourceNumLocal; i++) {
+        names += resultsTable[i][0] + "<br>";
+      }
+      namesDiv = document.createElement("div");
+      namesDiv.innerHTML = names;
+      namesDiv.style.cssText = "font-size: 0.7em; width: auto; overflow: hidden; max-height: 1em; min-height: 1em; position: absolute; left: -999em; top: -999em; display: table-cell";
+      document.body.appendChild(namesDiv);
+      namesCompStyle = window.getComputedStyle(namesDiv);
+      namesOffset = Number((namesCompStyle.getPropertyValue("width")).replace(/px/, "")) / Number((namesCompStyle.getPropertyValue("height")).replace(/px/, "")) / 1.4142 + 2;
+      document.body.removeChild(namesDiv);
+      outputMsg = '<div class="multitablewrapper"><table><tr style="height:' + namesOffset + 'em"><td data-columnid="0" class="multiheader"><div><span onclick="sortByColumn(this, false)">Target</span></div></td><td data-columnid="1" class="multiheader" colspan="2"><div><span onclick="sortByColumn(this)">Distance</span></div></td>';
+      for (i = 0; i < sourceNumLocal; i++) {
+          outputMsg += '<td data-columnid="' + (i + 2) + '" class="multisources"><div><span onclick="sortByColumn(this)">' + resultsTable[i][0] + '</span></div></td>';
+      }
+      outputMsg += '</tr>';
+      for (i = 0; i < targetNum; i++) {
+        currentDistance = results[i].distance;
+        outputMsg += '<tr data-rowid="' + i + '"><td onclick="sortByRow(this)" data-columnid="0" class="multitargets">' + targetArray[i][0] + '</td><td data-columnid="1" class="multidistance">' + currentDistance.toFixed(8) + '</td>' + returnDistChart(currentDistance, maxDistance, minDistance, averageDistance);
+        for (j = 0; j < sourceNumLocal; j++) {
+            currentResult = resultsTable[j][i + 1];
+            outputMsg += '<td data-columnid="' + (j + 2) + '" class="multiresult" style="background-color:' + returnHSL(currentResult) + '">' + (100 * currentResult).toFixed(1) + '</td>';
+        }
+        outputMsg += '</tr>';
+      }
+      outputMsg += '<tr><td onclick="sortByRow(this)" data-columnid="0" class="multitargets">Average</td><td data-columnid="1" class="multidistance">' + averageDistance + '</td>' + returnDistChart(averageDistance, maxDistance, minDistance, averageDistance);
+      for (i = 0; i < sourceNumLocal; i++) {
+          currentResult = averageResult[i] / targetNum;
+          outputMsg += '<td data-columnid="' + (i + 2) + '" class="multiresult" style="background-color:' + returnHSL(currentResult) + '">' + (100 * currentResult).toFixed(1) + '</td>';
+      }
+      outputMsg += '</tr>';
+      outputMsg += '</table><button onclick="resetSorting(this)" class="buttons buttonmulti">reset&nbsp;sorting</button><button onclick= "copyTable(this)" class="buttons buttonmulti">copy&nbsp;table&nbsp;as&nbsp;CSV</button><button onclick= "copyTable(this, true)" class="buttons buttonmulti">copy&nbsp;table&nbsp;as&nbsp;TSV</button></div>';
+      printOutput(outputMsg, "multioutput");
+    }
+    
+    function aggregateResults (resultsTable, sourceNumLocal) {
+      let popName, storedName;
+      for (i = 0; i < sourceNumLocal; i++) {
+        popName = resultsTable[i][0].split(":");
+        resultsTable[i][0] = popName[0];
+      }
+      resultsTable.sort( function(a, b) {
+        return a[0] > b[0];
+      });
+      for (i = sourceNumLocal - 2; i > -1; i--) {
+        if (resultsTable[i][0] == resultsTable[i + 1][0]) {
+          storedName = resultsTable[i][0];
+          resultsTable[i] = addArray(resultsTable[i],resultsTable[i + 1]);
+          resultsTable[i][0] = storedName;
+          resultsTable.splice(i + 1, 1);
+        }
+      }
+      return resultsTable;
+    }
+    
+    function sortByRow (elmnt) {
+      let i, j, rowLen, rowNum, ranking, cell;
+      const table = elmnt.parentNode.parentNode, 
+        row = elmnt.parentNode.cells;
+      rowLen = row.length;
+      ranking = Array(rowLen).fill([]);
+      for (i = 0; i < rowLen; i++) {
+        ranking[i] = ranking[i].concat([row[i].dataset.columnid]);
+        ranking[i].push(Number(row[i].innerHTML));
+      }
+      ranking.splice(0, 3);
+      ranking = sortByNum(ranking);
+      rowNum = table.rows.length;
+      rowLen = ranking.length;
+      for (i = 0; i < rowNum; i++) {
+        for (j = 0; j < rowLen; j++) {
+          cell = table.rows[i].querySelector('[data-columnid="' + ranking[j][0] + '"]');
+          cell.parentNode.appendChild(cell);
+        }
+      }      
+    }
+    
+    function sortByColumn (elmnt, byNumber = true) {
+      let i, column, columnLen, ranking, row;
+      elmnt = elmnt.parentNode.parentNode;
+      const table = elmnt.parentNode.parentNode,
+        columnid = elmnt.dataset.columnid;
+      column = table.querySelectorAll('[data-columnid="' + columnid + '"]');
+      columnLen = column.length;
+      ranking = Array(columnLen).fill([]);
+      for (i = 1; i < columnLen; i++) {
+        ranking[i] = ranking[i].concat([column[i].parentNode.dataset.rowid]);
+        ranking[i].push((byNumber ? Number(column[i].innerHTML) : column[i].innerHTML));
+      }
+      ranking.shift();
+      ranking.pop();
+      columnLen -= 2;
+
+      function sortByText(arr) {
+        const storeArr = arr.toString();
+        arr.sort( function(a, b) {
+          return a[1] > b[1];
+        });
+        if (storeArr == arr.toString()) {
+          arr.sort( function(a, b) {
+            return a[1] < b[1];
+          });
+        }
+        return arr;
+      }
+      
+      ranking = (byNumber ? sortByNum(ranking, (columnid == 1 ? false : true)) : sortByText(ranking));
+      for (i = 0; i < columnLen; i++) {
+        row = table.querySelector('[data-rowid="' + ranking[i][0] + '"]');
+        table.appendChild(row);
+      }
+      row = table.rows[1];
+      table.appendChild(row);
+    }
+    
+    function sortByNum(arr, desc = true) {
+      const storeArr = arr.toString();
+      function sortDesc (arr) {
+        arr.sort( function(a, b) {
+          return b[1] - a[1];
+        });
+        return arr;
+      }
+      function sortAsc (arr) {
+        arr.sort( function(a, b) {
+          return a[1] - b[1];
+        });
+        return arr;
+      }
+      arr = (desc ? sortDesc(arr) : sortAsc(arr));
+      if (storeArr == arr.toString()) {
+        arr = (desc ? sortAsc(arr) : sortDesc(arr));
+      }
+      return arr;
+    }
+    
+    function resetSorting (elmnt) {
+      let i, j, n, table, rowLen, row, columnLen, cell;
+      table = elmnt.parentNode.querySelector("tr").parentNode;
+      rowLen = table.rows.length;
+      for (i = 0, n = rowLen - 2; i < n; i++) {
+        row = table.querySelector('[data-rowid="' + i + '"]');
+        table.appendChild(row);
+      }
+      row = table.rows[1];
+      table.appendChild(row);
+      columnLen = table.rows[0].cells.length;
+      for (i = 0; i < rowLen; i++) {
+        for (j = 2; j < columnLen; j++) {
+          cell = table.rows[i].querySelector('[data-columnid="' + j + '"]');
+          cell.parentNode.appendChild(cell);
+        }
+      }
+    }
+    
+    function copyTable (elmnt, TSV = false) {
+      let tableText;
+      const textarea = document.createElement("textarea");
+      tableText = elmnt.parentNode.querySelector("tr").parentNode.innerHTML;
+      tableText = tableText.replace(/<\/td>/g,",").replace(/<\/tr>/g,"\n")
+        .replace(/<([^>]+)>/g,"").replace(/&#8226;,/g,"").replace(/•,/g,"")
+        .replace(/,\n/g,"\n");
+      if (TSV) {
+        tableText = tableText.replace(/,/g,"\t");
+      }
+      textarea.value = tableText;
+      textarea.setAttribute("readonly", "");
+      textarea.style.cssText = "position: absolute; top: -999em; left: -999em";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+    
+    function singleFMC (targetId) {
+      let i, outputMsg, currentResult, sourceNumLocal = sourceNum, 
+        resultsTable = Array(sourceNumLocal);
+      const  slots = 500,
+        target = prepareTarget(targetId, slots),
+        source = prepareSource(slots),
+        result = fastMonteCarlo(target, source, targetId, slots);
+      for (i = 0; i < sourceNumLocal; i++) {
+        resultsTable[i] = Array(2);
+        resultsTable[i][0] = sourceArray[i][0];
+        resultsTable[i][1] = result.scores[i];
+      }
+      if (aggregate) {
+        resultsTable = aggregateResults(resultsTable, sourceNumLocal);
+        sourceNumLocal = resultsTable.length;
+      }
+      resultsTable.sort( function(a, b) {
+        return b[1] - a[1];
+      });
+      outputMsg = "<table><tr><th colspan='" + (addBarChart == 2 ? 3 : 2) + "' class='singleheader'>Target: " + targetArray[targetId][0] + "<br/>";
+      outputMsg += "Distance: " + (100 * result.distance).toFixed(4) + "% / " + result.distance.toFixed(8) + "<br/>";
+      outputMsg += (aggregate == 1 ? "Aggregated<br/>" : "");
+      outputMsg += "</th></tr>";
+      for (i = 0; i < sourceNumLocal; i++) {
+        if (printZeroes || resultsTable[i][1] != 0) {
+          currentResult = resultsTable[i][1] * 100;
+          outputMsg += "<tr>"
+          outputMsg += (addBarChart == 2 ? '<td class="barchartmode2 nonselectable" style="background-image: linear-gradient(90deg, #aaa ' + currentResult + '%, #444 '+ currentResult +'%);"></td>' : '');
+          outputMsg += '<td class="singleleftcolumn">' + currentResult.toFixed(1) + '</td><td class="singlerightcolumn">' + resultsTable[i][0] + '</td>';
+          outputMsg += (addBarChart == 1 ? '<tr><td colspan= "2" class="barchartmode1 nonselectable" style="background-image: linear-gradient(90deg, #ff7f00 '+ currentResult +'%, #666 '+ currentResult +'%);"></td></tr>' : '');
+        }
+      }
+      outputMsg += "</table>"
+      printOutput(outputMsg, "singleoutput");
+    }
+    
+    function printOutput (what, where) {
+      const output = document.getElementById(where);
+      output.innerHTML = what + "<br><hr>" + output.innerHTML;
+    }
+    
+    function processInput () {
+      if (!inputHasChanged) {
+        return;
+      }
+      let errors = 0, message = "";
+      
+      function clearTargetButtons () {
+        document.getElementById("distancetargets").innerHTML = "";
+        document.getElementById("singletargets").innerHTML = "";
+        document.getElementById("runmulti").disabled = true;
+      }
+      
+      function textareaToArray (textareaId) {
+        let i, j, m, n, text1, text2, diff12, 
+          text3, diff23, text4, diff34, lines, columnNum;
+        const textarea = document.getElementById(textareaId);
+        textareaId = textareaId.toUpperCase();
+        text1 = textarea.value.trim().replace(/\r\n/g,"\n").replace(/\"/g,"").replace(/\</g, "&lt;").replace(/\>/g, "&gt;");
+        text2 = text1.replace(/[^\S\n]/g, "");
+        diff12 = text1.length - text2.length;
+        if (diff12 > 0) {
+          message += "WARNING! Number of white-space characters removed in " + textareaId + " data: "+diff12+". ";
+        }
+        text3 = text2.replace(/\n+/g, "\n");
+        diff23 = text2.length - text3.length;
+        if (diff23 > 0) {
+          message += "WARNING! Number of empty lines removed in " + textareaId + " data: " + diff23 + ". ";
+        }
+        text4 = text3.replace(/\,+/g, "\,");
+        diff34 = text3.length - text4.length;
+        if (diff34 > 0) {
+          message += "ERROR! Number of missing values in " + textareaId + " data: " + diff34 + ". ";
+          errors = 1;
+          return;
+        }
+        lines = text4.split("\n");
+        columnNum = lines[0].split(",").length;
+        if (columnNum === 1) {
+          message += "ERROR! Data load error in " + textareaId + ". ";
+          errors = 1;
+          return;
+        }
+        for (i = 0, n = lines.length; i < n; i++) {
+          lines[i] = lines[i].split(",");
+          if (lines[i].length !== columnNum) {
+            message += "ERROR! Variable column number in " + textareaId + " data. ";
+            errors = 1;
+            return;
+          }
+          for (j = 1, m = lines[i].length; j < m; j++) {
+            if (isNaN(lines[i][j])) {
+              message += "ERROR! Non-numerical value detected in " + textareaId + " data. ";
+              errors = 1;
+              return;
+            }
+          }
+        }
+        for (i = 0, n = lines.length; i < n; i++) {
+          for (j = 1; j < columnNum; j++) {
+            lines[i][j] = Number(lines[i][j]);
+          }
+        }
+        return lines;
+      }
+      
+      sourceArray = textareaToArray("source");
+      targetArray = textareaToArray("target");
+      if (errors) {
+        clearTargetButtons();
+        showNotification(message, 1);
+        return;
+      } else if (sourceArray[0].length !== targetArray[0].length) {
+        clearTargetButtons();
+        message += "ERROR! Column number mismatch.";
+        showNotification(message, 1);
+        return;
+      } else {
+        let targets = "", i;
+        clearNotification();
+        if (message.length > 0) {
+          showNotification(message);
+        }
+        sourceNum = sourceArray.length;
+        targetNum = targetArray.length;
+        dimensions = sourceArray[0].length - 1;
+        for (i = 0; i < targetNum; i++) {
+          targets = targets + '<button class="buttons button100" onclick="dispatcher(this,' + i + ')">' + targetArray[i][0] + '</button>';
+        }
+        document.getElementById("distancetargets").innerHTML = targets;
+        document.getElementById("singletargets").innerHTML = targets;
+        document.getElementById("runmulti").disabled = false;
+        inputHasChanged = false;
+      }
+    }
+    
+    function openTab (tabid, button) {
+      let i, n;
+      const tabs = document.getElementsByClassName("tab"), 
+        tablinks = document.getElementsByClassName("tablink");
+      for (i = 0, n = tabs.length; i < n; i++) {
+        tabs[i].style.display = "none";
+      }
+      
+      for (i = 0, n = tablinks.length; i < n; i++) {
+        tablinks[i].classList.add("inactive");
+      }
+      document.getElementById(tabid).style.display = "block";
+      document.getElementById(tabid).focus();
+      button.classList.remove("inactive");
+    }
+    
+    function initialize () {
+      document.getElementById("defaulttab").click();
+      if (document.getElementById("source").value.length > 0 || document.getElementById("target").value.length > 0 ) {
+        inputHasChanged = true;
+      } 
+    }
+  </script>
+</head>
+<body>
+  <nav>
+    <button class="tablink" onclick="openTab('source', this)" id="defaulttab">source</button><!--
+    --><button class="tablink" onclick="openTab('target', this)">target</button><!--
+    --><button class="tablink" onclick="openTab('distance', this);processInput()">distance</button><!--
+    --><button class="tablink" onclick="openTab('single', this);processInput()">single</button><!--
+    --><button class="tablink" onclick="openTab('multi', this);processInput()">multi</button>  
+  </nav>
+  <div id="notification" onclick="clearNotification()"></div>
+  <textarea onchange="inputHasChanged = true" class="tab tabinput" id="source" spellcheck="false" placeholder=" Paste data here. Comma-separated values, no header."></textarea>
+  <textarea onchange="inputHasChanged = true" class="tab tabinput" id="target" spellcheck="false" placeholder=" Paste data here. Comma-separated values, no header."></textarea>
+  <div class="tab" id="distance">
+    <div class="flexcontainer">
+      <div class="panel leftpanel" id="distanceoutput"></div>
+      <div class="panel rightpanel">
+        <button class="buttons button100" onclick="clearOutput(this, 'confirm')">clear&nbsp;output</button>
+        <div style="display: none">
+          <button class="buttons button20" onclick="clearOutput(this, 'distanceoutput')">ok</button><!--
+          --><button class="buttons button80" onclick="clearOutput(this, 'cancel')">cancel</button>
+        </div>
+        <button class="buttons button80" onclick="this.nextElementSibling.focus()">max output number:</button><!--
+        --><input spellcheck="false" class="buttons input20" id="distmaxout" value="25" onblur="validateDistMaxOut(this)">
+        <button class="buttons button100" onclick="toggleOptions('addGradient', this)">add gradient - yes</button>
+        <div>
+          <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient from:</button><!--
+          --><input spellcheck="false" class="buttons input20" id="gradfrom" value="0" onblur="validateGradFromTo(this)">
+          <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient to:</button><!--
+          --><input spellcheck="false" class="buttons input20" id="gradto" value="0.2" onblur="validateGradFromTo(this)">
+        </div>
+        <div id="distancetargets"></div>
+      </div>
+    </div>
+  </div>
+  <div class="tab" id="single">
+    <div class="flexcontainer">
+      <div class="panel leftpanel" id="singleoutput"></div>
+      <div class="panel rightpanel">
+        <button class="buttons button100" onclick="clearOutput(this, 'confirm')">clear&nbsp;output</button>
+        <div style="display: none"><!--
+          --><button class="buttons button20" onclick="clearOutput(this, 'singleoutput')">ok</button><!--
+          --><button class="buttons button80" onclick="clearOutput(this, 'cancel')">cancel</button><!--
+        --></div><!--
+        --><button class="buttons button100" onclick="toggleOptions('printZeroes', this)">print zeroes&nbsp;-&nbsp;no</button><!--
+        --><button class="buttons button100" onclick="toggleOptions('aggregate', this)">aggregate&nbsp;-&nbsp;yes</button><!--
+        --><button class="buttons button100" onclick="toggleOptions('addBarChart', this)">add&nbsp;bar&nbsp;chart&nbsp;-&nbsp;mode&nbsp;1</button>
+        <div id="singletargets"></div>
+      </div>
+    </div>
+  </div>
+  <div class="tab" id="multi">
+    <button class="buttons buttonmulti" onclick="clearOutput(this, 'confirm', 'inline-block')">clear output</button><!--
+        --><div style="display: none;"><!--
+          --><button class="buttons multiclearok" onclick="clearOutput(this, 'multioutput', 'inline-block')">ok</button><!--
+          --><button class="buttons multiclearcancel" onclick="clearOutput(this, 'cancel', 'inline-block')">cancel</button><!--
+        --></div><!--
+    --><button class="buttons buttonmulti" onclick="toggleOptions('fastModeMulti', this)">fast&nbsp;mode&nbsp;-&nbsp;no</button><!--
+    --><button class="buttons buttonmulti" onclick="toggleOptions('printZeroesMulti', this)">print&nbsp;zeroes&nbsp;-&nbsp;no</button><!--
+    --><button class="buttons buttonmulti" onclick="toggleOptions('aggregateMulti', this)">aggregate&nbsp;-&nbsp;yes</button><!--
+    --><button id="runmulti" disabled="true" class="buttons buttonmulti" onclick="multiFMC()">run</button>
+    <div id="multioutput"></div>
+  </div>
+  <script>
+    initialize();
+  </script>
+</body>
+</html>

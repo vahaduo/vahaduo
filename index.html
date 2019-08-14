@@ -536,7 +536,7 @@ https://github.com/vahaduo/
     
     function multiFMC () {
       let i, j, source, target, slots, resultsTable = Array(sourceNum), 
-        sourceNumLocal = sourceNum, outputMsg, tempLine, averageResult, 
+        sourceNumLocal = sourceNum, outputMsg, tempLine, accumulatedResult, 
         currentResult, longestSourceName = 0, averageDistance = 0, 
         minDistance, maxDistance, currentDistance, names = "", 
         namesDiv, namesCompStyle, namesOffset;
@@ -583,7 +583,7 @@ https://github.com/vahaduo/
         return '<td class="nonselectable multidistchart" style="background-image: linear-gradient(90deg, #777 ' + (averageDistancePct + 3) + '%, #999 '+ (averageDistancePct + 3) +'%, #999 '+ (averageDistancePct + 7) + '%, #777 ' + (averageDistancePct + 7) + '%);"><div style="padding-left: ' + (((currentDistancePct + 5) * 6 / 100) - 0.3) + 'em">&#8226;</div></td>';
       }
       
-      averageResult = Array(sourceNumLocal).fill(0);
+      accumulatedResult = Array(sourceNumLocal).fill(0);
       minDistance = results[0].distance;
       maxDistance = results[0].distance;
       for (i = 0; i < targetNum; i++) {
@@ -596,15 +596,15 @@ https://github.com/vahaduo/
           minDistance = currentDistance;
         }
         for (j = 0; j < sourceNumLocal; j++) {
-          averageResult[j] += resultsTable[j][i + 1];
+          accumulatedResult[j] += resultsTable[j][i + 1];
         }
       }
       averageDistance = (averageDistance / targetNum).toFixed(8);
       if (!printZeroesMulti) {
         for (i = sourceNumLocal - 1; i > -1; i--) {
-          if (averageResult[i] == 0) {
+          if (accumulatedResult[i] == 0) {
             resultsTable.splice(i, 1);
-            averageResult.splice(i, 1);
+            accumulatedResult.splice(i, 1);
           }
         }
         sourceNumLocal = resultsTable.length;
@@ -633,10 +633,10 @@ https://github.com/vahaduo/
         }
         outputMsg += '</tr>';
       }
-      outputMsg += '<tr><td onclick="sortByRow(this)" data-columnid="0" class="multitargets">Average</td><td data-columnid="1" class="multidistance">' + averageDistance + '</td>' + returnDistChart(averageDistance, maxDistance, minDistance, averageDistance);
+      outputMsg += '<tr><td onclick="sortByRow(this, true)" data-columnid="0" class="multitargets">Average</td><td data-columnid="1" class="multidistance">' + averageDistance + '</td>' + returnDistChart(averageDistance, maxDistance, minDistance, averageDistance);
       for (i = 0; i < sourceNumLocal; i++) {
-          currentResult = averageResult[i] / targetNum;
-          outputMsg += '<td data-columnid="' + (i + 2) + '" class="multiresult" style="background-color:' + returnHSL(currentResult) + '">' + (100 * currentResult).toFixed(1) + '</td>';
+          currentResult = accumulatedResult[i] / targetNum;
+          outputMsg += '<td data-columnid="' + (i + 2) + '" data-average="' + currentResult + '" class="multiresult" style="background-color:' + returnHSL(currentResult) + '">' + (100 * currentResult).toFixed(1) + '</td>';
       }
       outputMsg += '</tr>';
       outputMsg += '</table><button onclick="resetSorting(this)" class="buttons buttonmulti">reset&nbsp;sorting</button><button onclick= "copyTable(this)" class="buttons buttonmulti">copy&nbsp;table&nbsp;as&nbsp;CSV</button><button onclick= "copyTable(this, true)" class="buttons buttonmulti">copy&nbsp;table&nbsp;as&nbsp;TSV</button></div>';
@@ -663,15 +663,22 @@ https://github.com/vahaduo/
       return resultsTable;
     }
     
-    function sortByRow (elmnt) {
+    function sortByRow (elmnt, average = false) {
       let i, j, rowLen, rowNum, ranking, cell;
       const table = elmnt.parentNode.parentNode, 
         row = elmnt.parentNode.cells;
       rowLen = row.length;
       ranking = Array(rowLen).fill([]);
-      for (i = 0; i < rowLen; i++) {
-        ranking[i] = ranking[i].concat([row[i].dataset.columnid]);
-        ranking[i].push(Number(row[i].innerHTML));
+      if (average) {
+        for (i = 0; i < rowLen; i++) {
+          ranking[i] = ranking[i].concat([row[i].dataset.columnid]);
+          ranking[i].push(Number(row[i].dataset.average));
+        }
+      } else {
+        for (i = 0; i < rowLen; i++) {
+          ranking[i] = ranking[i].concat([row[i].dataset.columnid]);
+          ranking[i].push(Number(row[i].innerHTML));
+        }
       }
       ranking.splice(0, 3);
       ranking = sortByNum(ranking);

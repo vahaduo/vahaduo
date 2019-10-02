@@ -6,7 +6,7 @@ https://github.com/vahaduo/
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VahaduoJS 19.08</title>
+  <title>VahaduoJS 19.10</title>
   <style>
     body, html {
       height: 100%;
@@ -433,7 +433,7 @@ https://github.com/vahaduo/
       }
       output += '<table class="distances"><tr><th>Distance&nbsp;to:</th><th>' + target[0] + "</th>";
       for (i = 0; i < distMaxOut; i++) {
-        distanceCurrent = distances[i][1].toFixed(8);
+        distanceCurrent = distances[i][1];
         if (addGradient) {
           if (distanceCurrent < gradFrom) {
             gradHSL = 120;
@@ -443,7 +443,7 @@ https://github.com/vahaduo/
             gradHSL = 120 -(((distanceCurrent - gradFrom) / (gradTo - gradFrom)) * 240);
           }
         }
-        output += "<tr><td" + gradStyle1 + gradHSL + gradStyle2 + ">" + distanceCurrent + "</td><td>" + distances[i][0] + "</td></tr>";
+        output += "<tr><td" + gradStyle1 + gradHSL + gradStyle2 + ">" + distanceCurrent.toFixed(8) + "</td><td>" + distances[i][0] + "</td></tr>";
       }
       output += "</table>";
       printOutput(output, "distanceoutput");

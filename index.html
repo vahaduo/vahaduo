@@ -6,7 +6,7 @@ https://github.com/vahaduo/
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VahaduoJS 19.10</title>
+  <title>VahaduoJS 19.11</title>
   <style>
     body, html {
       height: 100%;
@@ -64,7 +64,7 @@ https://github.com/vahaduo/
       background-color: #999;
       background-image: none;
     }
-    #runmulti:disabled {
+    #runmulti:disabled, #runalldist:disabled {
       display: none;
     }
     .tabinput {
@@ -187,9 +187,19 @@ https://github.com/vahaduo/
       box-shadow: inset 1px 1px 0px 0px #444;
     }
     .nonselectable {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
       -moz-user-select: none;
+      -ms-user-select: none;
       user-select: none;
     }
+    .singleinfo {
+      font-weight: normal;
+    }
+    .singleinfo::before {
+      content: attr(data-nonselectable);
+    }   
     .singleheader {
       text-align: left;
       width: 100%;
@@ -257,7 +267,7 @@ https://github.com/vahaduo/
       sourceNum, targetNum, dimensions, addGradient = true, 
       printZeroes = false, aggregate = true, addBarChart = 1;
       printZeroesMulti = false, aggregateMulti = true, 
-      fastModeMulti = false;
+      fastModeMulti = false, cyclesX = 1, cyclesXMulti = 1;
     
     function showNotification (message, error = 0) {
       const notification = document.getElementById("notification");
@@ -321,6 +331,14 @@ https://github.com/vahaduo/
         case "fastModeMulti":
           toggleOption(fastModeMulti, "fast&nbsp;mode&nbsp;-&nbsp;");
           fastModeMulti = !fastModeMulti;
+          break;        
+        case "cyclesX":
+          cyclesX == 16 ? cyclesX = 1 : cyclesX *= 2;
+          elmnt.innerHTML = "cycles&nbsp;-&nbsp;" + cyclesX + "x";
+          break;
+        case "cyclesXMulti":
+          cyclesXMulti == 16 ? cyclesXMulti = 1 : cyclesXMulti *= 2;
+          elmnt.innerHTML = "cycles&nbsp;-&nbsp;" + cyclesXMulti + "x";
           break;
         case "addBarChart":
           addBarChart == 2 ? addBarChart = 0 : addBarChart += 1;
@@ -364,6 +382,13 @@ https://github.com/vahaduo/
         distances(targetId);
       } else {
         singleFMC(targetId);
+      }
+    }
+    
+    function runAllDist () {
+      let i;
+      for (i = 0; i < targetNum; i++) {
+        distances(i);
       }
     }
     
@@ -473,19 +498,22 @@ https://github.com/vahaduo/
       return source;
     }
     
-    function fastMonteCarlo (target, source, targetId, slots) {
+    function fastMonteCarlo (target, source, targetId, slots, cyclesMultiplier) {
       let i, j, tempLine, currentSlots, currentPoint, currentDistance, 
-        nextSlots, nextPoint, nextDistance, result; 
-      const cycles = sourceNum * 2, scores = Array(sourceNum).fill(0);
+        nextSlots, nextPoint, nextDistance, previousDistance, rankingNum; 
+      const cycles = sourceNum * cyclesMultiplier, scores = Array(sourceNum).fill(0),
+        result = {target: targetId, distance, scores}, ranking = Array();
       for (i = 0; i < sourceNum; i++) {
         source[i] = subArray(source[i], target);
       }
 
-      function randomizedSlots () {
-        let i;
-        const newSlots = Array(slots);
+      function randomizedSlots (oldSlots) {
+        let i, newSlots = Array(slots);
         for (i = 0; i < slots; i++) {
           newSlots[i] = randomFromRange(0, sourceNum);
+          while (newSlots[i] == oldSlots[i]){
+            newSlots[i] = randomFromRange(0, sourceNum);
+          }
         }
         return newSlots;
       }
@@ -505,11 +533,21 @@ https://github.com/vahaduo/
         return dist;
       }
       
-      currentSlots = randomizedSlots();
+      if (sourceNum == 1) {
+        currentSlots = Array(slots).fill(0);
+        currentPoint = buildPoint(currentSlots);
+        currentDistance = distance(currentPoint);
+        scores[0] = 1;
+        result.distance = Math.sqrt(currentDistance);
+        result.scores = scores;
+        return result;
+      }
+      currentSlots = Array(slots).fill(-1);
+      currentSlots = randomizedSlots(currentSlots);
       currentPoint = buildPoint(currentSlots);
       currentDistance = distance(currentPoint);
       for (i = 0; i < cycles; i++) {
-        nextSlots = randomizedSlots();
+        nextSlots = randomizedSlots(currentSlots);
         for (j = 0; j < slots; j++) {
           nextPoint = subArray(currentPoint, source[currentSlots[j]]);
           nextPoint = addArray(nextPoint, source[nextSlots[j]]);
@@ -520,18 +558,47 @@ https://github.com/vahaduo/
             currentDistance = nextDistance;
           }
         }
-     }
+      }
       for (i = 0; i < slots; i++) {
         scores[currentSlots[i]] += 1;
       }
       for (i = 0; i < sourceNum; i++) {
+        if (scores[i] > 0) {
+          ranking.push([i, scores[i]]);
+        }
+      }
+      ranking.sort(function(a, b) {
+        return b[1] - a[1];
+      });
+      rankingNum = ranking.length;
+      do {
+        previousDistance = currentDistance;
+        for (i = rankingNum -1; i > -1; i--) {
+          if (ranking[i][1] > 0) {
+            for (j = 0; j < rankingNum; j++) {
+              nextPoint = subArray(currentPoint, source[ranking[i][0]]);
+              nextPoint = addArray(nextPoint, source[ranking[j][0]]);
+              nextDistance = distance(nextPoint);
+              if (nextDistance < currentDistance) {
+                ranking[i][1]--;
+                ranking[j][1]++;
+                currentPoint = nextPoint;
+                currentDistance = nextDistance;
+                break;
+              }
+            }
+          }
+        }
+      }
+      while (currentDistance < previousDistance);
+      for (i = 0; i < rankingNum; i++) {
+        scores[ranking[i][0]] = ranking[i][1];
+      }
+      for (i = 0; i < sourceNum; i++) {
         scores[i] =  scores[i] / slots;
       }
-      result = {
-        target: targetId,
-        distance: Math.sqrt(currentDistance),
-        scores: scores
-      };
+      result.distance = Math.sqrt(currentDistance);
+      result.scores = scores;
       return result;
     }
     
@@ -546,7 +613,7 @@ https://github.com/vahaduo/
       for (i = 0; i < targetNum; i++) {
         source = prepareSource(slots);
         target = prepareTarget(i, slots);
-        results[i] = fastMonteCarlo(target, source, i, slots);
+        results[i] = fastMonteCarlo(target, source, i, slots, cyclesXMulti);
       }
       for (i = 0; i < sourceNum; i++) {
         resultsTable[i] = Array(targetNum + 1);
@@ -796,7 +863,7 @@ https://github.com/vahaduo/
       const  slots = 500,
         target = prepareTarget(targetId, slots),
         source = prepareSource(slots),
-        result = fastMonteCarlo(target, source, targetId, slots);
+        result = fastMonteCarlo(target, source, targetId, slots, cyclesX);
       for (i = 0; i < sourceNumLocal; i++) {
         resultsTable[i] = Array(2);
         resultsTable[i][0] = sourceArray[i][0];
@@ -811,7 +878,7 @@ https://github.com/vahaduo/
       });
       outputMsg = "<table><tr><th colspan='" + (addBarChart == 2 ? 3 : 2) + "' class='singleheader'>Target: " + targetArray[targetId][0] + "<br/>";
       outputMsg += "Distance: " + (100 * result.distance).toFixed(4) + "% / " + result.distance.toFixed(8) + "<br/>";
-      outputMsg += (aggregate == 1 ? "Aggregated<br/>" : "");
+      outputMsg += '<div class="singleinfo nonselectable" data-nonselectable="' + 'Sources: ' + sourceNum + ' Cycles: ' + sourceNum * cyclesX + '"></div>';
       outputMsg += "</th></tr>";
       for (i = 0; i < sourceNumLocal; i++) {
         if (printZeroes || resultsTable[i][1] != 0) {
@@ -841,6 +908,7 @@ https://github.com/vahaduo/
         document.getElementById("distancetargets").innerHTML = "";
         document.getElementById("singletargets").innerHTML = "";
         document.getElementById("runmulti").disabled = true;
+        document.getElementById("runalldist").disabled = true;
       }
       
       function textareaToArray (textareaId) {
@@ -922,6 +990,7 @@ https://github.com/vahaduo/
         document.getElementById("distancetargets").innerHTML = targets;
         document.getElementById("singletargets").innerHTML = targets;
         document.getElementById("runmulti").disabled = false;
+        document.getElementById("runalldist").disabled = false;
         inputHasChanged = false;
       }
     }
@@ -933,7 +1002,6 @@ https://github.com/vahaduo/
       for (i = 0, n = tabs.length; i < n; i++) {
         tabs[i].style.display = "none";
       }
-      
       for (i = 0, n = tablinks.length; i < n; i++) {
         tablinks[i].classList.add("inactive");
       }
@@ -979,6 +1047,7 @@ https://github.com/vahaduo/
           <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient to:</button><!--
           --><input spellcheck="false" class="buttons input20" id="gradto" value="0.2" onblur="validateGradFromTo(this)">
         </div>
+        <button id="runalldist" disabled="true" class="buttons button100" onclick="runAllDist()">run&nbsp;all</button>
         <div id="distancetargets"></div>
       </div>
     </div>
@@ -992,6 +1061,7 @@ https://github.com/vahaduo/
           --><button class="buttons button20" onclick="clearOutput(this, 'singleoutput')">ok</button><!--
           --><button class="buttons button80" onclick="clearOutput(this, 'cancel')">cancel</button><!--
         --></div><!--
+        --><button class="buttons button100" onclick="toggleOptions('cyclesX', this)">cycles&nbsp;-&nbsp;1x</button><!--
         --><button class="buttons button100" onclick="toggleOptions('printZeroes', this)">print zeroes&nbsp;-&nbsp;no</button><!--
         --><button class="buttons button100" onclick="toggleOptions('aggregate', this)">aggregate&nbsp;-&nbsp;yes</button><!--
         --><button class="buttons button100" onclick="toggleOptions('addBarChart', this)">add&nbsp;bar&nbsp;chart&nbsp;-&nbsp;mode&nbsp;1</button>
@@ -1005,6 +1075,7 @@ https://github.com/vahaduo/
           --><button class="buttons multiclearok" onclick="clearOutput(this, 'multioutput', 'inline-block')">ok</button><!--
           --><button class="buttons multiclearcancel" onclick="clearOutput(this, 'cancel', 'inline-block')">cancel</button><!--
         --></div><!--
+    --><button class="buttons buttonmulti" onclick="toggleOptions('cyclesXMulti', this)">cycles&nbsp;-&nbsp;1x</button><!--
     --><button class="buttons buttonmulti" onclick="toggleOptions('fastModeMulti', this)">fast&nbsp;mode&nbsp;-&nbsp;no</button><!--
     --><button class="buttons buttonmulti" onclick="toggleOptions('printZeroesMulti', this)">print&nbsp;zeroes&nbsp;-&nbsp;no</button><!--
     --><button class="buttons buttonmulti" onclick="toggleOptions('aggregateMulti', this)">aggregate&nbsp;-&nbsp;yes</button><!--

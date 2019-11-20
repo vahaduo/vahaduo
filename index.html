@@ -538,7 +538,7 @@ https://github.com/vahaduo/
         currentPoint = buildPoint(currentSlots);
         currentDistance = distance(currentPoint);
         scores[0] = 1;
-        result.distance = Math.sqrt(currentDistance);
+        result.distance = Number(Math.sqrt(currentDistance).toFixed(8));
         result.scores = scores;
         return result;
       }
@@ -597,7 +597,7 @@ https://github.com/vahaduo/
       for (i = 0; i < sourceNum; i++) {
         scores[i] =  scores[i] / slots;
       }
-      result.distance = Math.sqrt(currentDistance);
+      result.distance = Number(Math.sqrt(currentDistance).toFixed(8));
       result.scores = scores;
       return result;
     }

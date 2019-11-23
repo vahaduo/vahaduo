@@ -502,7 +502,8 @@ https://github.com/vahaduo/
       let i, j, tempLine, currentSlots, currentPoint, currentDistance, 
         nextSlots, nextPoint, nextDistance, previousDistance, rankingNum; 
       const cycles = sourceNum * cyclesMultiplier, scores = Array(sourceNum).fill(0),
-        result = {target: targetId, distance, scores}, ranking = Array();
+        result = {target: targetId, distance, scores}, ranking = Array(),
+        bigNumber = 100000000000000000;
       for (i = 0; i < sourceNum; i++) {
         source[i] = subArray(source[i], target);
       }
@@ -571,14 +572,16 @@ https://github.com/vahaduo/
         return b[1] - a[1];
       });
       rankingNum = ranking.length;
+      currentDistance = Math.round(bigNumber * currentDistance);
       do {
         previousDistance = currentDistance;
         for (i = rankingNum -1; i > -1; i--) {
           if (ranking[i][1] > 0) {
             for (j = 0; j < rankingNum; j++) {
+              if (i == j) {continue;}
               nextPoint = subArray(currentPoint, source[ranking[i][0]]);
               nextPoint = addArray(nextPoint, source[ranking[j][0]]);
-              nextDistance = distance(nextPoint);
+              nextDistance = Math.round(bigNumber * distance(nextPoint));
               if (nextDistance < currentDistance) {
                 ranking[i][1]--;
                 ranking[j][1]++;
@@ -597,6 +600,7 @@ https://github.com/vahaduo/
       for (i = 0; i < sourceNum; i++) {
         scores[i] =  scores[i] / slots;
       }
+      currentDistance = distance(currentPoint);
       result.distance = Number(Math.sqrt(currentDistance).toFixed(8));
       result.scores = scores;
       return result;

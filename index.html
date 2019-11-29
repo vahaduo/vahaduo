@@ -6,7 +6,7 @@ https://github.com/vahaduo/
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VahaduoJS 19.11.1</title>
+  <title>VahaduoJS 19.11.2</title>
   <style>
     body, html {
       height: 100%;
@@ -714,7 +714,7 @@ https://github.com/vahaduo/
       namesCompStyle = window.getComputedStyle(namesDiv);
       namesOffset = Number((namesCompStyle.getPropertyValue("width")).replace(/px/, "")) / Number((namesCompStyle.getPropertyValue("height")).replace(/px/, "")) / 1.4142 + 2;
       document.body.removeChild(namesDiv);
-      outputMsg = '<div class="multitablewrapper"><table><tr style="height:' + namesOffset + 'em"><td data-columnid="0" class="multiheader"><div><span onclick="sortByColumn(this, false)">Target</span></div></td><td data-columnid="1" class="multiheader" colspan="2"><div><span onclick="sortByColumn(this)">Distance</span></div></td>';
+      outputMsg = '<div class="multitablewrapper"><table><tr style="height:' + namesOffset + 'em"><td data-columnid="0" class="multiheader"><div><span onclick="sortByColumn(this, false)">Target</span></div></td><td data-columnid="1" class="multiheader" colspan="2"><div><span onclick="sortByColumn(this)">Distance' + (addDistColMulti == 1 ? "" : " | ADC: " + addDistColMulti / 8 + "x") + '</span></div></td>';
       for (i = 0; i < sourceNumLocal; i++) {
           outputMsg += '<td data-columnid="' + (i + 2) + '" class="multisources"><div><span onclick="sortByColumn(this)">' + resultsTable[i][0] + '</span></div></td>';
       }
@@ -905,7 +905,7 @@ https://github.com/vahaduo/
         return b[1] - a[1];
       });
       outputMsg = "<table><tr><th colspan='" + (addBarChart == 2 ? 3 : 2) + "' class='singleheader'>Target: " + targetArray[targetId][0] + "<br/>";
-      outputMsg += "Distance: " + (100 * result.distance).toFixed(4) + "% / " + result.distance.toFixed(8) + "<br/>";
+      outputMsg += "Distance: " + (100 * result.distance).toFixed(4) + "% / " + result.distance.toFixed(8) + (addDistCol == 1 ? "" : " | ADC: " + addDistCol / 8 + "x") + "<br/>";
       outputMsg += '<div class="singleinfo nonselectable" data-nonselectable="' + 'Sources: ' + sourceNum + ' Cycles: ' + sourceNum * cyclesX + '"></div>';
       outputMsg += "</th></tr>";
       for (i = 0; i < sourceNumLocal; i++) {

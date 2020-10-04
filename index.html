@@ -6,7 +6,8 @@ https://github.com/vahaduo/
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VahaduoJS 19.11.2</title>
+  <meta name="description" content="Rapid estimation of admixture proportions and calculation of Euclidean distances.">
+  <title>Vahaduo: Admixture JS 20.10</title>
   <style>
     body, html {
       height: 100%;
@@ -23,6 +24,22 @@ https://github.com/vahaduo/
       padding-top: 0.4em;
       padding-left: 0.4em;
       box-sizing: border-box;
+    }
+    header {
+      float: right;
+      text-align: right;
+      padding-left: 0 0.4em 0 0.4em;
+      margin: 0 1em 0 1em;
+      display: inline-block;
+      color: #9d9d9d;
+    }
+    header div {
+      text-transform: uppercase;
+      font-size: 0.5em;
+    }
+    a {
+      color: inherit;
+      text-decoration: inherit;
     }
     button {
       outline: none;
@@ -64,7 +81,7 @@ https://github.com/vahaduo/
       background-color: #999;
       background-image: none;
     }
-    #runmulti:disabled, #runalldist:disabled {
+    button:disabled {
       display: none;
     }
     .tabinput {
@@ -102,10 +119,14 @@ https://github.com/vahaduo/
       box-sizing: border-box;
       width: 100%;
       padding: 0.7em;
+      margin-top: 0.7em;
     }    
-    .flexcontainer {
+    .flexcontainer, .flexcontainer-nr {
       display: flex;
       width: 100%;
+    }
+    .flexcontainer-nr {
+      flex-wrap: wrap;
     }
     .panel {
       flex-grow: 1;
@@ -160,12 +181,23 @@ https://github.com/vahaduo/
     .distances td, .distances th {
       text-align: right;
     }
+    .distances td:first-child {
+      width: 8em;
+    }
     .distances td:nth-of-type(2), .distances th:nth-of-type(2) {
       text-align: left;
       padding-left: 0.7em;
     }
     .distances th {
       padding-bottom: 0.7em;
+    }
+    .twodistances-first {
+      outline-width: 1px;
+      outline-color: #eee;
+      outline-style: dotted;
+    }
+    #gradoptsdiff {
+      display: none;
     }
     hr {
       border: 0px;
@@ -185,6 +217,14 @@ https://github.com/vahaduo/
       width: 100%;
       height: 0.5em;
       box-shadow: inset 1px 1px 0px 0px #444;
+    }
+    .distances, #singleoutput > table {
+      -webkit-touch-callout: all;
+      -webkit-user-select: all;
+      -khtml-user-select: all;
+      -moz-user-select: all;
+      -ms-user-select: all;
+      user-select: all;
     }
     .nonselectable {
       -webkit-touch-callout: none;
@@ -268,7 +308,9 @@ https://github.com/vahaduo/
       printZeroes = false, aggregate = true, addBarChart = 1;
       printZeroesMulti = false, aggregateMulti = true, 
       fastModeMulti = false, cyclesX = 1, cyclesXMulti = 1,
-      addDistCol = 1, addDistColMulti = 1;
+      addDistCol = 1, addDistColMulti = 1, addDistColRecal = true,
+      addDistColMultiRecal = true, distMode = 0, twoDistClicked = false, 
+      twoDistFirst = false;
     
     function showNotification (message, error = 0) {
       const notification = document.getElementById("notification");
@@ -335,26 +377,68 @@ https://github.com/vahaduo/
           break;        
         case "cyclesX":
           cyclesX == 16 ? cyclesX = 1 : cyclesX *= 2;
-          elmnt.innerHTML = "cycles&nbsp;-&nbsp;" + cyclesX + "x";
+          elmnt.innerHTML = "cycles&nbsp;-&nbsp;" + cyclesX / 4 + "x";
           break;
         case "cyclesXMulti":
           cyclesXMulti == 16 ? cyclesXMulti = 1 : cyclesXMulti *= 2;
-          elmnt.innerHTML = "cycles&nbsp;-&nbsp;" + cyclesXMulti + "x";
+          elmnt.innerHTML = "cycles&nbsp;-&nbsp;" + cyclesXMulti / 4 + "x";
           break;
         case "addDistCol":
           addDistCol == 16 ? addDistCol = 1 : addDistCol *= 2;
           msg = (addDistCol == 1 ? "no" : addDistCol / 8 + "x");
           elmnt.innerHTML = "add&nbsp;dist&nbsp;col&nbsp;-&nbsp;" + msg;
+          if (addDistCol == 1) {
+            document.getElementById("adcrecal").disabled = true;
+          } else if (addDistCol == 2) {
+            document.getElementById("adcrecal").disabled = false;
+          }
           break;
         case "addDistColMulti":
           addDistColMulti == 16 ? addDistColMulti = 1 : addDistColMulti *= 2;
           msg = (addDistColMulti == 1 ? "no" : addDistColMulti / 8 + "x");
           elmnt.innerHTML = "add&nbsp;dist&nbsp;col&nbsp;-&nbsp;" + msg;
+          if (addDistColMulti == 1) {
+            document.getElementById("adcmrecal").disabled = true;
+          } else if (addDistColMulti == 2) {
+            document.getElementById("adcmrecal").disabled = false;
+          }
+          break;
+        case "addDistColRecal":
+          toggleOption(addDistColRecal, "recalculate&nbsp;-&nbsp;");
+          addDistColRecal = !addDistColRecal;
+          break;
+        case "addDistColMultiRecal":
+          toggleOption(addDistColMultiRecal, "recalculate&nbsp;-&nbsp;");
+          addDistColMultiRecal = !addDistColMultiRecal;
           break;
         case "addBarChart":
           addBarChart == 2 ? addBarChart = 0 : addBarChart += 1;
           msg = (addBarChart == 0 ? "no" : "mode&nbsp;" + addBarChart);
           elmnt.innerHTML = "add&nbsp;bar&nbsp;chart&nbsp;-&nbsp;" + msg;
+          break;
+        case "distMode":
+          distMode == 3 ? distMode = 0 : distMode +=1;
+          switch (distMode) {
+            case 0:
+              msg = "single";
+              document.getElementById("gradopts").style.display = "block";
+              document.getElementById("gradoptsdiff").style.display = "none";
+              clearTwoDistOpt();
+              break;
+            case 1:
+              msg = "difference&nbsp;(&nbsp;ac&nbsp;-&nbsp;bc&nbsp;)";
+              document.getElementById("gradopts").style.display = "none";
+              document.getElementById("gradoptsdiff").style.display = "block";
+              break;
+            case 2:
+              msg = "ratio&nbsp;(&nbsp;ac&nbsp;/&nbsp;bc&nbsp;)";
+              document.getElementById("gradoptsdiff").style.display = "none";
+              break;
+            case 3:
+              msg = "d3&nbsp;(&nbsp;ac&nbsp;-&nbsp;bc&nbsp;)&nbsp;/&nbsp;(&nbsp;ac&nbsp;+&nbsp;bc&nbsp;)";
+              break;
+          }
+          elmnt.innerHTML = "mode&nbsp;-&nbsp;" + msg;
           break;
         case "addGradient":
           msg = "add&nbsp;gradient&nbsp;-&nbsp;";
@@ -390,7 +474,11 @@ https://github.com/vahaduo/
     
     function dispatcher (elmnt, targetId) {
       if (elmnt.parentNode.id == "distancetargets") {
-        distances(targetId);
+        if (distMode == 0) {
+          distances(targetId);
+        } else {
+          twoDistances(targetId, elmnt);
+        }
       } else {
         singleFMC(targetId);
       }
@@ -398,8 +486,29 @@ https://github.com/vahaduo/
     
     function runAllDist () {
       let i;
+      if (distMode == 0) {
+        for (i = 0; i < targetNum; i++) {
+          distances(i);
+        }
+      } else {
+        if (targetNum < 2) {
+          showNotification("At least two TARGET samples are needed to make a comparison.", 0);
+        } else if (twoDistFirst === false ) {
+          showNotification("Select first TARGET sample to make a comparison.", 0);
+        } else {
+          for (i = 0; i < targetNum; i++) {
+            if (i !== twoDistFirst) {
+              twoDistances(i);
+            }
+          }
+        }
+      }
+    }
+
+    function runAllSingle () {
+      let i;
       for (i = 0; i < targetNum; i++) {
-        distances(i);
+        singleFMC(i);
       }
     }
     
@@ -434,9 +543,176 @@ https://github.com/vahaduo/
       });
       return squared;
     }
-    
+
+    function clearTwoDistOpt () {
+      if (twoDistClicked !== false) {
+        twoDistClicked.classList.remove("twodistances-first");
+        twoDistClicked = false;
+      }
+      twoDistFirst = false;
+    }
+
+    function twoDistances(targetId, elmnt) {
+      if (targetNum < 2) {
+        showNotification("At least two TARGET samples are needed to make a comparison.", 0);
+        return;
+      }
+      if (twoDistFirst === false) {
+        twoDistFirst = targetId;
+        twoDistClicked = elmnt;
+        twoDistClicked.classList.add("twodistances-first");
+        return;
+      }
+      if (twoDistFirst === targetId) {
+        twoDistClicked.classList.remove("twodistances-first");
+        twoDistClicked = false;
+        twoDistFirst = false;
+        return;
+      }
+      let i, output = "", resultsNum, getDistanceA, getDistanceB,
+        distanceCurrent, compare, comparisonType = "", comparisonValue,
+        distMaxOut = document.getElementById("distmaxout").value;
+      const targetA = targetArray[twoDistFirst].slice(), 
+        targetB = targetArray[targetId].slice(), distances = [], 
+        gradFrom = document.getElementById("gradfromdiff").value, 
+        gradTo = document.getElementById("gradtodiff").value;
+
+      function ratio (l, r) {
+        return l / r;
+      }
+
+      function diff (l, r) {
+        return l - r;
+      }
+
+      function d3 (l, r) {
+        return (l - r) / (l + r);
+      }
+
+      function dist (currentTarget1, currentTarget2) {
+        let getDistance = subArray(currentTarget2, currentTarget1);
+        getDistance.shift();
+        getDistance = squareArray(getDistance);
+        getDistance = getArraySum(getDistance);
+        getDistance = Math.sqrt(getDistance);
+        return getDistance;
+      }
+
+      function retrieveSrcArrEl (currentSource) {
+        return sourceArray[currentSource];
+      }
+
+      function upperDecorator (distance) {
+        let output = "";
+        if (addGradient) {
+          output += ' style="color:black;background-color:hsl(';
+          if (distMode == 1) {
+            let distAbs = Math.abs(distance);
+            if (distAbs < gradFrom) {
+              output += 60;
+            } else if (distAbs > gradTo) {
+              output += 180;
+            } else {
+              output += 60 + (((distAbs - gradFrom) / (gradTo - gradFrom)) * 120);
+            }
+          } else if (distMode == 2) {
+            output += (180 - distance * 120);
+          } else {
+            output += 60 - (distance * 120)
+          }
+          output += ', 100%, 50%)"';
+        }
+        return output + ">" + distance.toFixed(8);
+      }
+
+      function lowerDecorator (distance) {
+        let output = "";
+        if (addGradient) {
+          output += ' style="color:black;background-color:hsl(';
+          if (distMode == 1) {
+            if (distance < gradFrom) {
+              output += 60;
+            } else if (distance > gradTo) {
+              output += 300;
+            } else {
+              output += 60 - (((distance - gradFrom) / (gradTo - gradFrom)) * 120);
+            }
+          } else if (distMode == 2) {
+            output += (300 + 1 / distance * 120);
+          } else {
+            output += 60 - (distance * 120);
+          }
+          output += ', 100%, 50%)"';
+        }
+        return output + ">" + distance.toFixed(8);
+      }
+
+      switch (distMode) {
+        case 1:
+          comparisonType = "difference:&nbsp;(&nbsp;AC&nbsp;-&nbsp;BC&nbsp;)";
+          compare = diff;
+          comparisonValue = 0;
+          break;
+        case 2:
+          comparisonType = "ratio:&nbsp;(&nbsp;AC&nbsp;/&nbsp;BC&nbsp;)";
+          compare = ratio;
+          comparisonValue = 1;
+          break;
+        case 3:
+          comparisonType = "D3:&nbsp;(&nbsp;AC&nbsp;-&nbsp;BC&nbsp;)&nbsp;/&nbsp;(&nbsp;AC&nbsp;+&nbsp;BC&nbsp;)";
+          compare = d3;
+          comparisonValue = 0;
+          break;
+      }
+      for (i = 0; i < sourceNum; i++) {
+        getDistanceL = dist(retrieveSrcArrEl(i), targetA);
+        getDistanceR = dist(retrieveSrcArrEl(i), targetB);
+        if (getDistanceL > 0 && getDistanceR > 0) {
+          let tempArr = ['',''];
+          tempArr[0] = sourceArray[i][0];
+          tempArr[1] = compare(getDistanceL, getDistanceR);
+          distances.push(tempArr);
+        }
+      }
+      resultsNum = distances.length;
+      if (resultsNum < distMaxOut) {
+       distMaxOut = resultsNum;
+      }
+      distances.sort(function(a, b) {
+        return b[1] - a[1];
+      });
+
+      output += '<table class="distances"><tr><th colspan="2" style="text-align:left">Distance&nbsp;' + comparisonType + ' &uarr;' + '<br>A:&nbsp;' + targetA[0] + "<br>B:&nbsp;" + targetB[0] + "<br>C:&nbsp;&#8628;</th>";
+      for (i = 0; i < distMaxOut; i++) {
+        distanceCurrent = distances[resultsNum - 1 - i][1];
+        if (distanceCurrent >= comparisonValue) {
+          if (i == 0) {
+            output += "<tr><td colspan='2' style='text-align:center'>No values below " + comparisonValue + ".</td></tr>";
+          }
+          break;
+        }
+        output += "<tr><td" + upperDecorator(distanceCurrent) + "</td><td>" + distances[resultsNum - 1 - i][0] + "</td></tr>";
+      }
+      output += "</table><br>";
+
+      output += '<table class="distances"><tr><th colspan="2" style="text-align:left">Distance&nbsp;' + comparisonType + ' &darr;' + '<br>A:&nbsp;' + targetA[0] + "<br>B:&nbsp;" + targetB[0] + "<br>C:&nbsp;&#8628;</th>";
+      for (i = 0; i < distMaxOut; i++) {
+        distanceCurrent = distances[i][1];
+        if (distanceCurrent <= comparisonValue) {
+          if (i == 0) {
+            output += "<tr><td colspan='2' style='text-align:center'>No values above " + comparisonValue + ".</td></tr>";
+          }
+          break;
+        }
+        output += "<tr><td" + lowerDecorator(distanceCurrent) + "</td><td>" + distances[i][0] + "</td></tr>";
+      }
+      output += "</table>";
+
+      printOutput(output, "distanceoutput");
+    }
+
     function distances (targetId) {
-      let i, n, output = "", resultsNum, getDistance, distanceCurrent, 
+      let i, output = "", resultsNum, getDistance, distanceCurrent, 
         gradStyle1 = "", gradStyle2 = "", gradHSL = "", 
         distMaxOut = document.getElementById("distmaxout").value;
       const target = targetArray[targetId].slice(), 
@@ -509,11 +785,11 @@ https://github.com/vahaduo/
       return source;
     }
     
-    function fastMonteCarlo (target, source, targetId, slots, cyclesMultiplier, distColMultiplier) {
-      let i, j, tempLine, currentSlots, currentPoint, currentDistance, nextSlots, 
+    function fastMonteCarlo (target, source, targetId, slots, cyclesMultiplier, distColMultiplier, recalculate) {
+      let i, j, tempLine, currentSlots, currentPoint, currentDistance, nextSlots, ranking = Array(),
         nextPoint, nextDistance, previousDistance, rankingNum, dimNum = dimensions; 
-      const cycles = sourceNum * cyclesMultiplier, scores = Array(sourceNum).fill(0),
-        result = {target: targetId, distance, scores}, ranking = Array(),
+      const cycles = Math.ceil(sourceNum * cyclesMultiplier / 4), scores = Array(sourceNum).fill(0),
+        result = {target: targetId, distance, scores},
         bigNumber = 100000000000000000;
       if (distColMultiplier) {
         distColMultiplier /= 8;
@@ -593,35 +869,61 @@ https://github.com/vahaduo/
         return b[1] - a[1];
       });
       rankingNum = ranking.length;
-      currentDistance = Math.round(bigNumber * currentDistance);
-      do {
-        previousDistance = currentDistance;
-        for (i = rankingNum -1; i > -1; i--) {
-          if (ranking[i][1] > 0) {
-            for (j = 0; j < rankingNum; j++) {
-              if (i == j) {continue;}
-              nextPoint = subArray(currentPoint, source[ranking[i][0]]);
-              nextPoint = addArray(nextPoint, source[ranking[j][0]]);
-              nextDistance = Math.round(bigNumber * distance(nextPoint));
-              if (nextDistance < currentDistance) {
-                ranking[i][1]--;
-                ranking[j][1]++;
-                currentPoint = nextPoint;
-                currentDistance = nextDistance;
-                break;
+      function secondStage () { 
+        currentDistance = Math.round(bigNumber * currentDistance);
+        do {
+          previousDistance = currentDistance;
+          for (i = rankingNum -1; i > -1; i--) {
+            if (ranking[i][1] > 0) {
+              for (j = 0; j < rankingNum; j++) {
+                if (i == j) {continue;}
+                nextPoint = subArray(currentPoint, source[ranking[i][0]]);
+                nextPoint = addArray(nextPoint, source[ranking[j][0]]);
+                nextDistance = Math.round(bigNumber * distance(nextPoint));
+                if (nextDistance < currentDistance) {
+                  ranking[i][1]--;
+                  ranking[j][1]++;
+                  currentPoint = nextPoint;
+                  currentDistance = nextDistance;
+                  break;
+                }
               }
             }
           }
         }
+        while (currentDistance < previousDistance);
       }
-      while (currentDistance < previousDistance);
+      secondStage();
       for (i = 0; i < rankingNum; i++) {
         scores[ranking[i][0]] = ranking[i][1];
       }
+      if (distColMultiplier && recalculate) {
+        dimNum--;
+        currentPoint.pop();
+        currentDistance = distance(currentPoint);
+        for (i = 0; i < sourceNum; i++) {
+          source[i].pop();
+        }
+        ranking = [];
+        for (i = 0; i < sourceNum; i++) {
+          if (scores[i] > 0) {
+            ranking.push([i, scores[i]]);
+          }
+        }
+        ranking.sort(function(a, b) {
+          return b[1] - a[1];
+        });
+        rankingNum = ranking.length;
+        secondStage();
+        for (i = 0; i < rankingNum; i++) {
+          scores[ranking[i][0]] = ranking[i][1];
+        }
+      }
+
       for (i = 0; i < sourceNum; i++) {
         scores[i] =  scores[i] / slots;
       }
-      if (distColMultiplier) {currentPoint.pop();}
+      if (distColMultiplier && !recalculate) {currentPoint.pop();}
       currentDistance = distance(currentPoint);
       result.distance = Number(Math.sqrt(currentDistance).toFixed(8));
       result.scores = scores;
@@ -640,7 +942,7 @@ https://github.com/vahaduo/
       for (i = 0; i < targetNum; i++) {
         source = prepareSource(slots);
         target = prepareTarget(i, slots);
-        results[i] = fastMonteCarlo(target, source, i, slots, cyclesXMulti, addDC);
+        results[i] = fastMonteCarlo(target, source, i, slots, cyclesXMulti, addDC, addDistColMultiRecal);
       }
       for (i = 0; i < sourceNum; i++) {
         resultsTable[i] = Array(targetNum + 1);
@@ -714,7 +1016,7 @@ https://github.com/vahaduo/
       namesCompStyle = window.getComputedStyle(namesDiv);
       namesOffset = Number((namesCompStyle.getPropertyValue("width")).replace(/px/, "")) / Number((namesCompStyle.getPropertyValue("height")).replace(/px/, "")) / 1.4142 + 2;
       document.body.removeChild(namesDiv);
-      outputMsg = '<div class="multitablewrapper"><table><tr style="height:' + namesOffset + 'em"><td data-columnid="0" class="multiheader"><div><span onclick="sortByColumn(this, false)">Target</span></div></td><td data-columnid="1" class="multiheader" colspan="2"><div><span onclick="sortByColumn(this)">Distance' + (addDistColMulti == 1 ? "" : " | ADC: " + addDistColMulti / 8 + "x") + '</span></div></td>';
+      outputMsg = '<div class="multitablewrapper"><table><tr style="height:' + namesOffset + 'em"><td data-columnid="0" class="multiheader"><div><span onclick="sortByColumn(this, false)">Target</span></div></td><td data-columnid="1" class="multiheader" colspan="2"><div><span onclick="sortByColumn(this)">Distance' + (addDistColMulti == 1 ? "" : " | ADC: " + addDistColMulti / 8 + "x" + (addDistColMultiRecal ? " RC" : "")) + '</span></div></td>';
       for (i = 0; i < sourceNumLocal; i++) {
           outputMsg += '<td data-columnid="' + (i + 2) + '" class="multisources"><div><span onclick="sortByColumn(this)">' + resultsTable[i][0] + '</span></div></td>';
       }
@@ -886,12 +1188,12 @@ https://github.com/vahaduo/
     
     function singleFMC (targetId) {
       let i, outputMsg, currentResult, sourceNumLocal = sourceNum, 
-        resultsTable = Array(sourceNumLocal);
+        resultsTable = Array(sourceNumLocal), time = Date.now();
       const  slots = 500,
         target = prepareTarget(targetId, slots),
         source = prepareSource(slots),
         addDC = (addDistCol == 1 ? false : addDistCol),
-        result = fastMonteCarlo(target, source, targetId, slots, cyclesX, addDC);
+        result = fastMonteCarlo(target, source, targetId, slots, cyclesX, addDC, addDistColRecal);
       for (i = 0; i < sourceNumLocal; i++) {
         resultsTable[i] = Array(2);
         resultsTable[i][0] = sourceArray[i][0];
@@ -904,9 +1206,10 @@ https://github.com/vahaduo/
       resultsTable.sort( function(a, b) {
         return b[1] - a[1];
       });
+      time = Date.now() - time;
       outputMsg = "<table><tr><th colspan='" + (addBarChart == 2 ? 3 : 2) + "' class='singleheader'>Target: " + targetArray[targetId][0] + "<br/>";
-      outputMsg += "Distance: " + (100 * result.distance).toFixed(4) + "% / " + result.distance.toFixed(8) + (addDistCol == 1 ? "" : " | ADC: " + addDistCol / 8 + "x") + "<br/>";
-      outputMsg += '<div class="singleinfo nonselectable" data-nonselectable="' + 'Sources: ' + sourceNum + ' Cycles: ' + sourceNum * cyclesX + '"></div>';
+      outputMsg += "Distance: " + (100 * result.distance).toFixed(4) + "% / " + result.distance.toFixed(8) + (addDistCol == 1 ? "" : " | ADC: " + addDistCol / 8 + "x" + (addDistColRecal ? " RC" : "")) + "<br/>";
+      outputMsg += '<div class="singleinfo nonselectable" data-nonselectable="' + 'Sources: ' + sourceNum + ' | Cycles: ' + Math.ceil(sourceNum * cyclesX / 4) + ' | Time: ' + time / 1000 + '&nbsp;s' + '"></div>';
       outputMsg += "</th></tr>";
       for (i = 0; i < sourceNumLocal; i++) {
         if (printZeroes || resultsTable[i][1] != 0) {
@@ -937,6 +1240,8 @@ https://github.com/vahaduo/
         document.getElementById("singletargets").innerHTML = "";
         document.getElementById("runmulti").disabled = true;
         document.getElementById("runalldist").disabled = true;
+        document.getElementById("runallsingle").disabled = true;
+        clearTwoDistOpt();
       }
       
       function textareaToArray (textareaId) {
@@ -1019,6 +1324,8 @@ https://github.com/vahaduo/
         document.getElementById("singletargets").innerHTML = targets;
         document.getElementById("runmulti").disabled = false;
         document.getElementById("runalldist").disabled = false;
+        document.getElementById("runallsingle").disabled = false;
+        clearTwoDistOpt();
         inputHasChanged = false;
       }
     }
@@ -1040,6 +1347,8 @@ https://github.com/vahaduo/
     
     function initialize () {
       document.getElementById("defaulttab").click();
+      document.getElementById("adcmrecal").disabled = true;
+      document.getElementById("adcrecal").disabled = true;
       if (document.getElementById("source").value.length > 0 || document.getElementById("target").value.length > 0 ) {
         inputHasChanged = true;
       } 
@@ -1048,6 +1357,7 @@ https://github.com/vahaduo/
 </head>
 <body>
   <nav>
+    <header><a href="https://vahaduo.github.io" target="_blank" title="Open Vahaduo App Gallery">Vahaduo<div>Admixture JS</div></a></header>
     <button class="tablink" onclick="openTab('source', this)" id="defaulttab">source</button><!--
     --><button class="tablink" onclick="openTab('target', this)">target</button><!--
     --><button class="tablink" onclick="openTab('distance', this);processInput()">distance</button><!--
@@ -1066,14 +1376,23 @@ https://github.com/vahaduo/
           <button class="buttons button20" onclick="clearOutput(this, 'distanceoutput')">ok</button><!--
           --><button class="buttons button80" onclick="clearOutput(this, 'cancel')">cancel</button>
         </div>
+        <button class="buttons button100" onclick="toggleOptions('distMode', this)">mode - single</button>
         <button class="buttons button80" onclick="this.nextElementSibling.focus()">max output number:</button><!--
         --><input spellcheck="false" class="buttons input20" id="distmaxout" value="25" onblur="validateDistMaxOut(this)">
         <button class="buttons button100" onclick="toggleOptions('addGradient', this)">add gradient - yes</button>
         <div>
-          <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient from:</button><!--
-          --><input spellcheck="false" class="buttons input20" id="gradfrom" value="0" onblur="validateGradFromTo(this)">
-          <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient to:</button><!--
-          --><input spellcheck="false" class="buttons input20" id="gradto" value="0.2" onblur="validateGradFromTo(this)">
+          <div id="gradopts">
+            <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient from:</button><!--
+            --><input spellcheck="false" class="buttons input20" id="gradfrom" value="0" onblur="validateGradFromTo(this)">
+            <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient to:</button><!--
+            --><input spellcheck="false" class="buttons input20" id="gradto" value="0.2" onblur="validateGradFromTo(this)">
+          </div>
+          <div id="gradoptsdiff">
+            <button class="buttons button80" onclick="this.nextElementSibling.focus()">diff gradient from:</button><!--
+            --><input spellcheck="false" class="buttons input20" id="gradfromdiff" value="0" onblur="validateGradFromTo(this)">
+            <button class="buttons button80" onclick="this.nextElementSibling.focus()">diff gradient to:</button><!--
+            --><input spellcheck="false" class="buttons input20" id="gradtodiff" value="0.2" onblur="validateGradFromTo(this)">
+          </div>
         </div>
         <button id="runalldist" disabled="true" class="buttons button100" onclick="runAllDist()">run&nbsp;all</button>
         <div id="distancetargets"></div>
@@ -1089,27 +1408,40 @@ https://github.com/vahaduo/
           --><button class="buttons button20" onclick="clearOutput(this, 'singleoutput')">ok</button><!--
           --><button class="buttons button80" onclick="clearOutput(this, 'cancel')">cancel</button><!--
         --></div><!--
-        --><button class="buttons button100" onclick="toggleOptions('cyclesX', this)">cycles&nbsp;-&nbsp;1x</button><!--
+        --><button class="buttons button100" onclick="toggleOptions('cyclesX', this)">cycles&nbsp;-&nbsp;0.25x</button><!--
         --><button class="buttons button100" onclick="toggleOptions('addDistCol', this)">add&nbsp;dist&nbsp;col&nbsp;-&nbsp;no</button><!--
+        --><button id="adcrecal" disabled="true" class="buttons button100" onclick="toggleOptions('addDistColRecal', this)">recalculate&nbsp;-&nbsp;yes</button><!--
         --><button class="buttons button100" onclick="toggleOptions('printZeroes', this)">print zeroes&nbsp;-&nbsp;no</button><!--
         --><button class="buttons button100" onclick="toggleOptions('aggregate', this)">aggregate&nbsp;-&nbsp;yes</button><!--
-        --><button class="buttons button100" onclick="toggleOptions('addBarChart', this)">add&nbsp;bar&nbsp;chart&nbsp;-&nbsp;mode&nbsp;1</button>
+        --><button class="buttons button100" onclick="toggleOptions('addBarChart', this)">add&nbsp;bar&nbsp;chart&nbsp;-&nbsp;mode&nbsp;1</button><!--
+        --><button id="runallsingle" disabled="true" class="buttons button100" onclick="runAllSingle()">run&nbsp;all</button>
         <div id="singletargets"></div>
       </div>
     </div>
   </div>
   <div class="tab" id="multi">
-    <button class="buttons buttonmulti" onclick="clearOutput(this, 'confirm', 'inline-block')">clear output</button><!--
-        --><div style="display: none;"><!--
-          --><button class="buttons multiclearok" onclick="clearOutput(this, 'multioutput', 'inline-block')">ok</button><!--
-          --><button class="buttons multiclearcancel" onclick="clearOutput(this, 'cancel', 'inline-block')">cancel</button><!--
-        --></div><!--
-    --><button class="buttons buttonmulti" onclick="toggleOptions('cyclesXMulti', this)">cycles&nbsp;-&nbsp;1x</button><!--
-    --><button class="buttons buttonmulti" onclick="toggleOptions('addDistColMulti', this)">add&nbsp;dist&nbsp;col&nbsp;-&nbsp;no</button><!--
-    --><button class="buttons buttonmulti" onclick="toggleOptions('fastModeMulti', this)">fast&nbsp;mode&nbsp;-&nbsp;no</button><!--
-    --><button class="buttons buttonmulti" onclick="toggleOptions('printZeroesMulti', this)">print&nbsp;zeroes&nbsp;-&nbsp;no</button><!--
-    --><button class="buttons buttonmulti" onclick="toggleOptions('aggregateMulti', this)">aggregate&nbsp;-&nbsp;yes</button><!--
-    --><button id="runmulti" disabled="true" class="buttons buttonmulti" onclick="multiFMC()">run</button>
+    <div class="flexcontainer-nr">
+      <div>
+        <button class="buttons buttonmulti" onclick="toggleOptions('cyclesXMulti', this)">cycles&nbsp;-&nbsp;0.25x</button><br>
+        <button class="buttons buttonmulti" onclick="toggleOptions('fastModeMulti', this)">fast&nbsp;mode&nbsp;-&nbsp;no</button>
+      </div>
+      <div>
+        <button class="buttons buttonmulti" onclick="toggleOptions('addDistColMulti', this)">add&nbsp;dist&nbsp;col&nbsp;-&nbsp;no</button><br>
+        <button id="adcmrecal" disabled="true" class="buttons buttonmulti" onclick="toggleOptions('addDistColMultiRecal', this)">recalculate&nbsp;-&nbsp;yes</button>
+      </div>
+      <div>
+        <button class="buttons buttonmulti" onclick="toggleOptions('printZeroesMulti', this)">print&nbsp;zeroes&nbsp;-&nbsp;no</button><br>
+        <button class="buttons buttonmulti" onclick="toggleOptions('aggregateMulti', this)">aggregate&nbsp;-&nbsp;yes</button>
+      </div>
+      <div>
+        <button class="buttons buttonmulti" onclick="clearOutput(this, 'confirm', 'inline-block')">clear output</button><!--
+            --><div style="display: none;"><!--
+              --><button class="buttons multiclearok" onclick="clearOutput(this, 'multioutput', 'inline-block')">ok</button><!--
+              --><button class="buttons multiclearcancel" onclick="clearOutput(this, 'cancel', 'inline-block')">cancel</button><!--
+            --></div><br>
+        <button id="runmulti" disabled="true" class="buttons buttonmulti" onclick="multiFMC()">run</button>
+      </div>
+    </div>
     <div id="multioutput"></div>
   </div>
   <script>

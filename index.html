@@ -305,7 +305,7 @@ https://github.com/vahaduo/
   <script>
     let inputHasChanged = false, sourceArray, targetArray, 
       sourceNum, targetNum, dimensions, addGradient = true, 
-      printZeroes = false, aggregate = true, addBarChart = 1;
+      printZeroes = false, aggregate = true, addBarChart = 1,
       printZeroesMulti = false, aggregateMulti = true, 
       fastModeMulti = false, cyclesX = 1, cyclesXMulti = 1,
       addDistCol = 1, addDistColMulti = 1, addDistColRecal = true,
@@ -1041,7 +1041,7 @@ https://github.com/vahaduo/
     }
     
     function aggregateResults (resultsTable, sourceNumLocal) {
-      let popName, storedName;
+      let i, popName, storedName;
       for (i = 0; i < sourceNumLocal; i++) {
         popName = resultsTable[i][0].split(":");
         resultsTable[i][0] = popName[0];

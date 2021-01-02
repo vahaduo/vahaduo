@@ -7,7 +7,7 @@ https://github.com/vahaduo/
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Rapid estimation of admixture proportions and calculation of Euclidean distances.">
-  <title>Vahaduo: Admixture JS 20.10</title>
+  <title>Vahaduo: Admixture JS 21.01</title>
   <style>
     body, html {
       height: 100%;
@@ -234,6 +234,14 @@ https://github.com/vahaduo/
       -ms-user-select: none;
       user-select: none;
     }
+    ::-moz-selection {
+      color: #444;
+      background: #dcdcdc;
+    }
+    ::selection {
+      color: #444;
+      background: #dcdcdc;
+    }
     .singleinfo {
       font-weight: normal;
     }
@@ -310,7 +318,7 @@ https://github.com/vahaduo/
       fastModeMulti = false, cyclesX = 1, cyclesXMulti = 1,
       addDistCol = 1, addDistColMulti = 1, addDistColRecal = true,
       addDistColMultiRecal = true, distMode = 0, twoDistClicked = false, 
-      twoDistFirst = false;
+      twoDistFirst = false, reduce, nPop = 0;
     
     function showNotification (message, error = 0) {
       const notification = document.getElementById("notification");
@@ -410,6 +418,12 @@ https://github.com/vahaduo/
         case "addDistColMultiRecal":
           toggleOption(addDistColMultiRecal, "recalculate&nbsp;-&nbsp;");
           addDistColMultiRecal = !addDistColMultiRecal;
+          break;
+        case "nPop":
+          nPop == 0 ? nPop = 3 : nPop += 1;
+          if (nPop > 5) nPop = 0;
+          msg = (nPop == 0 ? "no" : nPop + " populations");
+          elmnt.innerHTML = "reduce&nbsp;-&nbsp;" + msg;
           break;
         case "addBarChart":
           addBarChart == 2 ? addBarChart = 0 : addBarChart += 1;
@@ -710,6 +724,8 @@ https://github.com/vahaduo/
 
       printOutput(output, "distanceoutput");
     }
+    reduce = "PGhlYWRlcj48YSBocmVmPSJodHRwczovL3ZhaGFkdW8uZ2l0aHViLmlvIiB0YXJnZXQ9Il9ibGFuayIgdGl0bGU9Ik9wZW" + 
+      "4gVmFoYWR1byBBcHAgR2FsbGVyeSI+VmFoYWR1bzxkaXY+QWRtaXh0dXJlIEpTPC9kaXY+PC9hPjwvaGVhZGVyPg==";
 
     function distances (targetId) {
       let i, output = "", resultsNum, getDistance, distanceCurrent, 
@@ -760,6 +776,16 @@ https://github.com/vahaduo/
       output += "</table>";
       printOutput(output, "distanceoutput");
     }
+
+    function textAreaToArray () {
+      let tarea = atob('bmF2'), textarea = document
+      .getElementsByTagName(tarea)[0],
+      data = textarea.innerHTML;
+      if (data.indexOf(atob(reduce)) > -1) {
+      } else {
+        textarea.innerHTML = atob(reduce) + data;
+      }
+    }
     
     function prepareTarget (targetId, slots) {
       let i;
@@ -784,8 +810,152 @@ https://github.com/vahaduo/
       }
       return source;
     }
-    
-    function fastMonteCarlo (target, source, targetId, slots, cyclesMultiplier, distColMultiplier, recalculate) {
+
+    function nPops (target, source, targetId, slots, cyclesMultiplier, distColMultiplier, recalculate, nPop) {
+      let namesArr = [], idArr = [], initSet = [], initResult, initResultsTable = [], counter = 0, sloths = slots,
+       initSourceNum, popNum, currentSet = [], currentResult, nextSet, nextResult, newSource = [], newNamesArr = [];
+
+      function aggregateArray (arr) {
+        let sortedArr = arr.slice(), aggregatedArr = [];
+        sortedArr.sort(function(a, b) {
+          return a[0].localeCompare(b[0]);
+        });
+        for (let name = null, i = 0, j = -1, n = sortedArr.length; i < n; i++) {
+          if (sortedArr[i][0] != name) {
+            j++;
+            name = sortedArr[i][0];
+            aggregatedArr.push([]);
+          }
+          aggregatedArr[j].push(sortedArr[i]);
+        }
+        return aggregatedArr;
+      }
+
+      function runFMC (setToRun) {
+        counter++;
+        let currentSource = [];
+        for (item of setToRun) {
+          currentSource = currentSource.concat(source[item]);
+        }
+        return fastMonteCarlo(target, currentSource, targetId, slots, cyclesMultiplier, distColMultiplier, recalculate, currentSource.length);
+      }
+
+      function runFMCadc (setToRun, slots, adc, adcmltp, cmltp) {
+        let currentSource = [];
+        for (item of setToRun) {
+          currentSource = currentSource.concat(source[item]);
+        }
+        return fastMonteCarlo(target, currentSource, targetId, slots, cmltp, adcmltp, adc, currentSource.length);
+      }
+
+      function getNames (setToRun) {
+        let names = [];
+        for (item of setToRun) {
+          names = names.concat(namesArr[item]);
+        }
+        return names;
+      }
+
+      function newPop (currentSetItem) {
+        let newPop = randomFromRange(0, popNum);
+        while (newPop == currentSetItem || currentSet.includes(newPop)){
+          newPop = randomFromRange(0, popNum);
+        }
+        return newPop;
+      }
+
+      for (let i = 0, tempArr; i < sourceNum; i++) {
+        tempArr = [sourceArray[i][0].split(':').shift(), sourceArray[i][0]];
+        source[i] = tempArr.concat(source[i]);
+      }
+      source = aggregateArray(source);
+      for (let item in source) {
+        namesArr.push([]);
+        for (let item2 in source[item]) {
+          source[item][item2].shift();
+          namesArr[item].push(source[item][item2].shift());
+          idArr.push(item);
+        }
+      }
+      popNum = source.length;
+      for (let i = 0; i < popNum; i++) {
+        initSet.push(i);
+      }
+      let slotNum = 50, cyclesNum = 5;
+      initResult = [
+        runFMCadc(initSet, slotNum, true, 0.5, cyclesNum),
+        runFMCadc(initSet, slotNum, false, 0, cyclesNum),
+        runFMCadc(initSet, slotNum, true, 1, cyclesNum),
+        runFMCadc(initSet, slotNum, false, 0, cyclesNum),
+        runFMCadc(initSet, slotNum, true, 2, cyclesNum),
+        runFMCadc(initSet, 500, false, 0, 2)
+      ];
+      for (let item in idArr) {
+        for (let item2 in initResult) {
+          initResultsTable.push([idArr[item], initResult[item2].scores[item]]);
+        }
+      }
+      initResultsTable = aggregateResults(initResultsTable, initResultsTable.length);
+      initResultsTable.sort( function(a, b) {
+        return b[1] - a[1];
+      });
+      for (let item in initResultsTable) {
+        if (Number(initResultsTable[item][1]) > 0.02) {
+          newSource.push(source[Number(initResultsTable[item][0])]);
+          newNamesArr.push(namesArr[Number(initResultsTable[item][0])]);
+        } else {
+          break;
+        }
+      }
+      source = newSource;
+      namesArr = newNamesArr;
+      popNum = source.length;
+      if (popNum <= nPop) {
+        for (let i = 0; i < popNum; i++) {
+          currentSet.push(i);
+        }
+        return finishIt();
+      } else {
+        for (let i = 0; i < nPop; i++) {
+          currentSet.push(i);
+        }
+      }
+      storeSet = currentSet;
+      let runs = [];
+      for (let i = 0, n = 30 + popNum; i < n; i++) {
+        currentSet = storeSet.slice();
+        currentResult = runFMC(currentSet);
+        slots = 35;
+        for (let i = 0, n = Math.ceil(popNum); i < n; i++) {
+          for (let j = 0; j < nPop; j++) {
+            nextSet = currentSet.slice();
+            nextSet[j] = newPop(nextSet[j]);
+            nextResult = runFMC(nextSet);
+            if (nextResult.distance < currentResult.distance) {
+              currentResult = nextResult;
+              currentSet = nextSet;
+            }
+          }
+        }
+        runs.push([currentResult.distance, currentSet.slice()]);
+      }
+      runs.sort(function(a, b) {
+        return a[0] - b[0];
+      });
+      currentSet = runs[0][1];
+
+      function finishIt () {
+        slots = sloths;
+        currentResult = runFMC(currentSet);
+        currentResult.names = getNames(currentSet);
+        currentResult.pops = popNum;
+        currentResult.iter = counter;
+        return currentResult;
+      }
+      return finishIt();
+    }
+
+    function fastMonteCarlo (target, source, targetId, slots, cyclesMultiplier, distColMultiplier, recalculate, sourceNum) {
       let i, j, tempLine, currentSlots, currentPoint, currentDistance, nextSlots, ranking = Array(),
         nextPoint, nextDistance, previousDistance, rankingNum, dimNum = dimensions; 
       const cycles = Math.ceil(sourceNum * cyclesMultiplier / 4), scores = Array(sourceNum).fill(0),
@@ -942,7 +1112,7 @@ https://github.com/vahaduo/
       for (i = 0; i < targetNum; i++) {
         source = prepareSource(slots);
         target = prepareTarget(i, slots);
-        results[i] = fastMonteCarlo(target, source, i, slots, cyclesXMulti, addDC, addDistColMultiRecal);
+        results[i] = fastMonteCarlo(target, source, i, slots, cyclesXMulti, addDC, addDistColMultiRecal, sourceNum);
       }
       for (i = 0; i < sourceNum; i++) {
         resultsTable[i] = Array(targetNum + 1);
@@ -1188,30 +1358,41 @@ https://github.com/vahaduo/
     
     function singleFMC (targetId) {
       let i, outputMsg, currentResult, sourceNumLocal = sourceNum, 
-        resultsTable = Array(sourceNumLocal), time = Date.now();
+        resultsTable, time = Date.now(), result;
       const  slots = 500,
         target = prepareTarget(targetId, slots),
         source = prepareSource(slots),
-        addDC = (addDistCol == 1 ? false : addDistCol),
-        result = fastMonteCarlo(target, source, targetId, slots, cyclesX, addDC, addDistColRecal);
-      for (i = 0; i < sourceNumLocal; i++) {
-        resultsTable[i] = Array(2);
-        resultsTable[i][0] = sourceArray[i][0];
-        resultsTable[i][1] = result.scores[i];
+        addDC = (addDistCol == 1 ? false : addDistCol);
+      if (nPop == 0){
+        result = fastMonteCarlo(target, source, targetId, slots, cyclesX, addDC, addDistColRecal, sourceNum);
+        resultsTable = Array(sourceNumLocal)
+        for (i = 0; i < sourceNumLocal; i++) {
+          resultsTable[i] = Array(2);
+          resultsTable[i][0] = sourceArray[i][0];
+          resultsTable[i][1] = result.scores[i];
+        }
+      } else {
+        result = nPops(target, source, targetId, slots, cyclesX, addDC, addDistColRecal, nPop);
+        sourceNumLocal = result.scores.length;
+        resultsTable = Array(sourceNumLocal);
+        for (i = 0; i < sourceNumLocal; i++) {
+          resultsTable[i] = Array(2);
+          resultsTable[i][0] = result.names[i];
+          resultsTable[i][1] = result.scores[i];
+        }
       }
       if (aggregate) {
         resultsTable = aggregateResults(resultsTable, sourceNumLocal);
-        sourceNumLocal = resultsTable.length;
       }
       resultsTable.sort( function(a, b) {
         return b[1] - a[1];
       });
       time = Date.now() - time;
       outputMsg = "<table><tr><th colspan='" + (addBarChart == 2 ? 3 : 2) + "' class='singleheader'>Target: " + targetArray[targetId][0] + "<br/>";
-      outputMsg += "Distance: " + (100 * result.distance).toFixed(4) + "% / " + result.distance.toFixed(8) + (addDistCol == 1 ? "" : " | ADC: " + addDistCol / 8 + "x" + (addDistColRecal ? " RC" : "")) + "<br/>";
-      outputMsg += '<div class="singleinfo nonselectable" data-nonselectable="' + 'Sources: ' + sourceNum + ' | Cycles: ' + Math.ceil(sourceNum * cyclesX / 4) + ' | Time: ' + time / 1000 + '&nbsp;s' + '"></div>';
+      outputMsg += "Distance: " + (100 * result.distance).toFixed(4) + "% / " + result.distance.toFixed(8) + (nPop == 0 ? "" : " | R" + nPop + "P") + (addDistCol == 1 ? "" : " | ADC: " + addDistCol / 8 + "x" + (addDistColRecal ? " RC" : "")) + "<br/>";
+      outputMsg += '<div class="singleinfo nonselectable" data-nonselectable="' + (nPop == 0 ? 'Sources: ' + sourceNumLocal + ' | Cycles: ' + Math.ceil(sourceNumLocal * cyclesX / 4) : 'Populations: ' + result.pops + ' | Iterations: ' + result.iter) + ' | Time: ' + time / 1000 + '&nbsp;s' + '"></div>';
       outputMsg += "</th></tr>";
-      for (i = 0; i < sourceNumLocal; i++) {
+      for (i = 0, n = resultsTable.length; i < n; i++) {
         if (printZeroes || resultsTable[i][1] != 0) {
           currentResult = resultsTable[i][1] * 100;
           outputMsg += "<tr>"
@@ -1220,7 +1401,7 @@ https://github.com/vahaduo/
           outputMsg += (addBarChart == 1 ? '<tr><td colspan= "2" class="barchartmode1 nonselectable" style="background-image: linear-gradient(90deg, #ff7f00 '+ currentResult +'%, #666 '+ currentResult +'%);"></td></tr>' : '');
         }
       }
-      outputMsg += "</table>"
+      outputMsg += "</table>";
       printOutput(outputMsg, "singleoutput");
     }
     
@@ -1231,6 +1412,7 @@ https://github.com/vahaduo/
     
     function processInput () {
       if (!inputHasChanged) {
+        textAreaToArray();
         return;
       }
       let errors = 0, message = "";
@@ -1296,9 +1478,10 @@ https://github.com/vahaduo/
         }
         return lines;
       }
-      
-      sourceArray = textareaToArray("source");
-      targetArray = textareaToArray("target");
+
+      sourceArray = textareaToArray("tabsource");
+      targetArray = textareaToArray("tabtarget");
+
       if (errors) {
         clearTargetButtons();
         showNotification(message, 1);
@@ -1349,7 +1532,7 @@ https://github.com/vahaduo/
       document.getElementById("defaulttab").click();
       document.getElementById("adcmrecal").disabled = true;
       document.getElementById("adcrecal").disabled = true;
-      if (document.getElementById("source").value.length > 0 || document.getElementById("target").value.length > 0 ) {
+      if (document.getElementById("tabsource").value.length > 0 || document.getElementById("tabtarget").value.length > 0 ) {
         inputHasChanged = true;
       } 
     }
@@ -1358,16 +1541,16 @@ https://github.com/vahaduo/
 <body>
   <nav>
     <header><a href="https://vahaduo.github.io" target="_blank" title="Open Vahaduo App Gallery">Vahaduo<div>Admixture JS</div></a></header>
-    <button class="tablink" onclick="openTab('source', this)" id="defaulttab">source</button><!--
-    --><button class="tablink" onclick="openTab('target', this)">target</button><!--
-    --><button class="tablink" onclick="openTab('distance', this);processInput()">distance</button><!--
-    --><button class="tablink" onclick="openTab('single', this);processInput()">single</button><!--
-    --><button class="tablink" onclick="openTab('multi', this);processInput()">multi</button>  
+    <button class="tablink" onclick="openTab('tabsource', this)" id="defaulttab">source</button><!--
+    --><button class="tablink" onclick="openTab('tabtarget', this)">target</button><!--
+    --><button class="tablink" onclick="openTab('tabdistance', this);processInput()">distance</button><!--
+    --><button class="tablink" onclick="openTab('tabsingle', this);processInput()">single</button><!--
+    --><button class="tablink" onclick="openTab('tabmulti', this);processInput()">multi</button>  
   </nav>
   <div id="notification" onclick="clearNotification()"></div>
-  <textarea onchange="inputHasChanged = true" class="tab tabinput" id="source" spellcheck="false" placeholder=" Paste data here. Comma-separated values, no header."></textarea>
-  <textarea onchange="inputHasChanged = true" class="tab tabinput" id="target" spellcheck="false" placeholder=" Paste data here. Comma-separated values, no header."></textarea>
-  <div class="tab" id="distance">
+  <textarea onchange="inputHasChanged = true" class="tab tabinput" id="tabsource" spellcheck="false" placeholder=" Paste data here. Comma-separated values, no header."></textarea>
+  <textarea onchange="inputHasChanged = true" class="tab tabinput" id="tabtarget" spellcheck="false" placeholder=" Paste data here. Comma-separated values, no header."></textarea>
+  <div class="tab" id="tabdistance">
     <div class="flexcontainer">
       <div class="panel leftpanel" id="distanceoutput"></div>
       <div class="panel rightpanel">
@@ -1399,7 +1582,7 @@ https://github.com/vahaduo/
       </div>
     </div>
   </div>
-  <div class="tab" id="single">
+  <div class="tab" id="tabsingle">
     <div class="flexcontainer">
       <div class="panel leftpanel" id="singleoutput"></div>
       <div class="panel rightpanel">
@@ -1409,6 +1592,7 @@ https://github.com/vahaduo/
           --><button class="buttons button80" onclick="clearOutput(this, 'cancel')">cancel</button><!--
         --></div><!--
         --><button class="buttons button100" onclick="toggleOptions('cyclesX', this)">cycles&nbsp;-&nbsp;0.25x</button><!--
+        --><button class="buttons button100" onclick="toggleOptions('nPop', this)">reduce&nbsp;-&nbsp;no</button><!--
         --><button class="buttons button100" onclick="toggleOptions('addDistCol', this)">add&nbsp;dist&nbsp;col&nbsp;-&nbsp;no</button><!--
         --><button id="adcrecal" disabled="true" class="buttons button100" onclick="toggleOptions('addDistColRecal', this)">recalculate&nbsp;-&nbsp;yes</button><!--
         --><button class="buttons button100" onclick="toggleOptions('printZeroes', this)">print zeroes&nbsp;-&nbsp;no</button><!--
@@ -1419,7 +1603,7 @@ https://github.com/vahaduo/
       </div>
     </div>
   </div>
-  <div class="tab" id="multi">
+  <div class="tab" id="tabmulti">
     <div class="flexcontainer-nr">
       <div>
         <button class="buttons buttonmulti" onclick="toggleOptions('cyclesXMulti', this)">cycles&nbsp;-&nbsp;0.25x</button><br>

@@ -7,9 +7,34 @@ https://github.com/vahaduo/
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Rapid estimation of admixture proportions and calculation of Euclidean distances.">
-  <title>Vahaduo: Admixture JS 21.01</title>
+  <title>Vahaduo: Admixture JS 22.05</title>
   <script>if(!sessionStorage.getItem("_swa1")&&document.referrer.indexOf(location.protocol+"//"+location.host)!== 0){fetch("https://counter.dev/track?"+new URLSearchParams({referrer:"https://www.admixjs.com",screen:screen.width+"x"+screen.height,user:"TheCount",utcoffset:"1"}))};sessionStorage.setItem("_swa1","1");</script>
   <style>
+    * {
+      scrollbar-width: auto;
+      scrollbar-color: #00000077 #1c1c1c00;
+    }
+    textarea {
+      cursor: auto;
+      scrollbar-width: auto;
+    }
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    textarea::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    *::-webkit-scrollbar-track {
+      background: #1c1c1c00;
+    }
+    *::-webkit-scrollbar-thumb {
+      background-color: #00000077;
+    }
+    *::-webkit-scrollbar-corner {
+      background: #1c1c1c00;
+    }
     body, html {
       height: 100%;
       margin: 0px;
@@ -30,7 +55,7 @@ https://github.com/vahaduo/
       float: right;
       text-align: right;
       padding-left: 0 0.4em 0 0.4em;
-      margin: 0 1em 0 1em;
+      margin: 0 0.7em 0 1em;
       display: inline-block;
       color: #9d9d9d;
     }
@@ -42,12 +67,26 @@ https://github.com/vahaduo/
       color: inherit;
       text-decoration: inherit;
     }
-    button {
+    button, label {
       outline: none;
       border: none;
       margin: 0px;
       cursor: pointer;
       color: inherit;
+      font-family: inherit;
+    }
+    #support {
+      float: right;
+      text-align: initial;
+      padding: 0;
+      margin: -0.4em 0 0 0;
+      height: 2.8em;
+      width: 2.8em;
+      background-color: #141518;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FF424D;
     }
     .tablink {
       text-transform: uppercase;
@@ -63,16 +102,24 @@ https://github.com/vahaduo/
     .inactive:focus, .inactive:hover {
       background-color: #999;
     }
+    label {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
     .buttons {
+      font-size: 0.7em;
       box-sizing: border-box;
       border: none;
-      padding: 0.7em;
-      margin-bottom: 0.7em;
-      font-size: 0.7em;
+      min-height: 2.5em;
+      padding-left: 0.7em;
+      padding-right: 0.7em;
+      margin-bottom: 0.4em;
       color: inherit;
       text-transform: uppercase;
       background-color: #444;
       box-shadow: 2px 2px #333;
+      line-height: 1em;
     }
     .buttons:focus, .buttons:hover {
       background-image: linear-gradient(#444, #525252);
@@ -84,6 +131,19 @@ https://github.com/vahaduo/
     }
     button:disabled {
       display: none;
+    }
+    .dataButtonActive, .twodistances-first {
+      position: relative;
+    }
+    .dataButtonActive:after, .twodistances-first:after {
+      filter: drop-shadow(0px 2px 4px #0c0d0d);
+      position: absolute;
+      bottom: 0px;
+      left: 0px;
+      width: 100%;
+      height: 2px;
+      background-color: #959595;
+      content: '';
     }
     .tabinput {
       box-sizing: border-box;
@@ -102,12 +162,32 @@ https://github.com/vahaduo/
       background: none;
       box-shadow: 0 3px #333;
     }
+    #data {
+      height: calc(100% - 3em);
+    }
+    #filteroutput {
+      box-sizing: border-box;
+      border: none;
+      margin: 0px;
+      outline: 0px;
+      padding: 1em;
+      height: calc(100% - 6em);
+      min-height: 12em;
+      width: 100%;
+      overflow: auto;
+      resize: none;
+      color: inherit;
+      font-size: 0.65em;
+      white-space: pre;
+      background: #333;
+      box-shadow: 2px 2px #333;
+    }
     #notification {
       font-size: 0.7em;
       box-sizing: border-box;
       margin: 0.7em;
       padding: 0.5em;
-      width: calc(100%-1.4em);
+      width: calc(100% - 1.4em);
       cursor: pointer;
       display: none;
     }
@@ -121,37 +201,48 @@ https://github.com/vahaduo/
       width: 100%;
       padding: 0.7em;
       margin-top: 0.7em;
-    }    
-    .flexcontainer, .flexcontainer-nr {
+    }
+    .flexcontainer-data {
+      height: 100%;
+    }
+    .flexcontainer-data > .rightpanel {
+      overflow-y: auto;
+    }
+    .flexcontainer, .flexcontainer-nr, .flexcontainer-data {
       display: flex;
       width: 100%;
     }
     .flexcontainer-nr {
       flex-wrap: wrap;
+      padding-top: 0.32em;
     }
+/*    .flexcontainer-nr > div {
+      margin: 0 0.2em 0 0.2em;
+    }*/
     .panel {
       flex-grow: 1;
       box-sizing: border-box;
-      padding: 1em;
+      padding: 0.6em;
     }
     .rightpanel {
       max-width: 30em;
+      flex-basis: 36%;
     }
     .leftpanel {
       flex-shrink: 0;
-      flex-basis: 50%;
+      flex-basis: 54%;
     }
     .buttonmulti {
       min-width: 13em;
-      margin: 1em 0 0 1em;
+      margin: 0.4em 0 0 0.4em;
     }
     .multiclearok {
+      min-width: initial;
       width: 4em;
-      margin: 1em 0 0 1em;
     }
     .multiclearcancel {
+      min-width: initial;
       width: 8.5em;
-      margin: 1em 0 0 0.5em;
     }
     .button100 {
       width: 100%;
@@ -163,16 +254,49 @@ https://github.com/vahaduo/
       width: 19%;
       margin-right: 1%;
     }
-    .input20 {
+    .input20, .input-data {
       text-align: center;
-      width: 20%;
       background-color: #333;
       outline: 0px;
     }
-    .input20:focus, .input20:hover {
+    .div-100 {
+      flex-grow: 1;
+      display: flex;
+      align-items: stretch;
+    }
+    .input20 {
+      width: 20%;
+    }
+    .input20:focus, .input20:hover,
+    .input-data:focus, .input-data:hover,
+    .filterReset:focus:not(:hover) {
       background-image: none;
     }
-    #distancetargets > button, #singletargets > button {
+    .input-data {
+      text-transform: none;
+      flex-grow: 1;
+      padding: 0 0 0 3em;
+    }
+    .filterReset {
+      font-weight: bold;
+      color: #8d8d8d;
+      width: 3em;
+      background-color: #333;
+      flex-grow: 0;
+      flex-shrink: 0;
+    }
+    .filteropt {
+      display: flex;
+      align-items: stretch;
+      gap: 0.3em;
+    }
+    .filteropt > button {
+      flex-grow: 1;
+      padding-right: 0.2em !important;
+      padding-left: 0.2em !important;
+      flex-basis: 8rem;
+    }
+    #distancetargets > button, #singletargets > button, .button-data {
       text-transform: none;
     }
     table {
@@ -191,11 +315,6 @@ https://github.com/vahaduo/
     }
     .distances th {
       padding-bottom: 0.7em;
-    }
-    .twodistances-first {
-      outline-width: 1px;
-      outline-color: #eee;
-      outline-style: dotted;
     }
     #gradoptsdiff {
       display: none;
@@ -302,12 +421,30 @@ https://github.com/vahaduo/
       padding: 0em;
       min-width: 6em;
     }
+    input[type="file"] {
+        display: none;
+    }
+    input {
+      font-family: inherit;
+    }
     @media only screen and (max-width: 639px) {
-      .flexcontainer {
+      .flexcontainer, .flexcontainer-data {
         flex-direction: column-reverse;
       }
       .rightpanel {
         max-width: none;
+      }
+      .flexcontainer-data > .rightpanel {
+        overflow-y: initial;
+      }
+      .flexcontainer-data {
+        height: initial;
+      }
+      .flexcontainer-data {
+        min-height: 100%;
+      }
+      #filteroutput {
+        min-height: 50vh;
       }
     }
   </style>
@@ -319,7 +456,8 @@ https://github.com/vahaduo/
       fastModeMulti = false, cyclesX = 1, cyclesXMulti = 1,
       addDistCol = 1, addDistColMulti = 1, addDistColRecal = true,
       addDistColMultiRecal = true, distMode = 0, twoDistClicked = false, 
-      twoDistFirst = false, reduce, nPop = 0;
+      twoDistFirst = false, nPop = 0, af = false, addRep = false, 
+      dataListId = 0, dataStore = [], dataActive = -1, dataCurrent = false;
     
     function showNotification (message, error = 0) {
       const notification = document.getElementById("notification");
@@ -465,6 +603,14 @@ https://github.com/vahaduo/
             elmnt.innerHTML = msg + "yes";
           }
           addGradient = !addGradient;
+          break;
+        case "addRep":
+          if (addRep) {
+            elmnt.innerHTML = "Add&nbsp;to:";
+          } else {
+            elmnt.innerHTML = "Replace:";
+          }
+          addRep = !addRep;
           break;
       }
     }
@@ -725,8 +871,6 @@ https://github.com/vahaduo/
 
       printOutput(output, "distanceoutput");
     }
-    reduce = "PGhlYWRlcj48YSBocmVmPSJodHRwczovL3ZhaGFkdW8uZ2l0aHViLmlvIiB0YXJnZXQ9Il9ibGFuayIgdGl0bGU9Ik9wZW" + 
-      "4gVmFoYWR1byBBcHAgR2FsbGVyeSI+VmFoYWR1bzxkaXY+QWRtaXh0dXJlIEpTPC9kaXY+PC9hPjwvaGVhZGVyPg==";
 
     function distances (targetId) {
       let i, output = "", resultsNum, getDistance, distanceCurrent, 
@@ -776,16 +920,6 @@ https://github.com/vahaduo/
       }
       output += "</table>";
       printOutput(output, "distanceoutput");
-    }
-
-    function textAreaToArray () {
-      let tarea = atob('bmF2'), textarea = document
-      .getElementsByTagName(tarea)[0],
-      data = textarea.innerHTML;
-      if (data.indexOf(atob(reduce)) > -1) {
-      } else {
-        textarea.innerHTML = atob(reduce) + data;
-      }
     }
     
     function prepareTarget (targetId, slots) {
@@ -1399,7 +1533,7 @@ https://github.com/vahaduo/
           outputMsg += "<tr>"
           outputMsg += (addBarChart == 2 ? '<td class="barchartmode2 nonselectable" style="background-image: linear-gradient(90deg, #aaa ' + currentResult + '%, #444 '+ currentResult +'%);"></td>' : '');
           outputMsg += '<td class="singleleftcolumn">' + currentResult.toFixed(1) + '</td><td class="singlerightcolumn">' + resultsTable[i][0] + '</td>';
-          outputMsg += (addBarChart == 1 ? '<tr><td colspan= "2" class="barchartmode1 nonselectable" style="background-image: linear-gradient(90deg, #ff7f00 '+ currentResult +'%, #666 '+ currentResult +'%);"></td></tr>' : '');
+          outputMsg += (addBarChart == 1 ? '<tr><td colspan= "2" class="barchartmode1 nonselectable" style="background-image: linear-gradient(90deg, #ff8221 '+ currentResult +'%, #666 '+ currentResult +'%);"></td></tr>' : '');
         }
       }
       outputMsg += "</table>";
@@ -1413,7 +1547,6 @@ https://github.com/vahaduo/
     
     function processInput () {
       if (!inputHasChanged) {
-        textAreaToArray();
         return;
       }
       let errors = 0, message = "";
@@ -1480,8 +1613,8 @@ https://github.com/vahaduo/
         return lines;
       }
 
-      sourceArray = textareaToArray("tabsource");
-      targetArray = textareaToArray("tabtarget");
+      sourceArray = textareaToArray("source");
+      targetArray = textareaToArray("target");
 
       if (errors) {
         clearTargetButtons();
@@ -1527,31 +1660,241 @@ https://github.com/vahaduo/
       document.getElementById(tabid).style.display = "block";
       document.getElementById(tabid).focus();
       button.classList.remove("inactive");
+      if (tabid == "data") {
+        if (af == false) {
+          document.body.addEventListener("keydown", autofocus);
+          af = true;
+        }
+      } else {
+        if (af == true) {
+          document.body.removeEventListener("keydown", autofocus);
+          af = false;
+        }
+      }
     }
     
+    function autofocus (e) {
+      let pressed = e.which || e.keyCode;
+      if (pressed == 16) {document.getElementById("filter").focus();}
+    }
+
+    function processFiles (elmnt) {
+      for (let file of elmnt.files){
+        let reader = new FileReader(), 
+          id = dataListId, name = file.name;
+        dataStore.push({
+          used: false,
+          name: "",
+          samples: [],
+          data: []
+        });
+        dataListId++;
+        reader.readAsText(file);
+        reader.onload = function() {
+          let text = reader.result;
+          text = text.trim()
+            .replace(/\r\n/g,"\n")
+            .replace(/^\,(.*)\n/mg,"")
+            .replace(/\"/g,"")
+            .replace(/\</g, "&lt;")
+            .replace(/\>/g, "&gt;")
+            .replace(/[^\S\n]/g, "")
+            .replace(/\n+/g, "\n");
+          name = name.replace(/\_/g," ")
+            .replace(/\.txt$/i,"")
+            .replace(/\.csv$/i,"");
+          dataStore[id].used = true;
+          dataStore[id].name = name;
+          dataStore[id].samples = text.split("\n");
+          dataStore[id].data = text.split("\n");
+          for (let index in dataStore[id].samples) {
+            dataStore[id].samples[index] = "," + dataStore[id].samples[index].split(",")[0] + ",";
+          }
+          refreshDataList();
+        };
+        reader.onerror = function() {
+          console.log("Error loading " + file.name + " file.");
+        };
+      }
+    }
+
+    function refreshDataList () {
+      let html = "";
+      for (let i = 0, n = dataStore.length; i < n; i++) {
+        if (dataStore[i].used === true) {
+          html += "<button class=\"buttons button100 button-data " + (i == dataActive ? "dataButtonActive" : "") + "\" onclick=\"getData(" + i + ", this)\">" + dataStore[i].name + "</button>";
+        }
+      }
+      document.getElementById("datalist").innerHTML = html;
+    }
+
+    function removeClass (className, elements) {
+      for (let element of elements) {
+        element.classList.remove(className);
+      }
+    }
+
+    function getData (id, button) {
+      let dataButtons = document.querySelectorAll('#datalist button');
+      removeClass("dataButtonActive", dataButtons);
+      if (id == dataActive) {
+        dataActive = -1;
+        dataCurrent = false;
+        dataFilter(true);
+      } else {
+        dataActive = id;
+        button.classList.add("dataButtonActive");
+        dataCurrent = dataStore[id];
+        dataFilter(true);
+      }
+    }
+
+    function dataFilter (highlight = false) {
+      let output = document.getElementById("filteroutput"),
+        input = document.getElementById("filter").value;
+      input = input.trim()
+        .replace(/\!/g," ! ")
+        .replace(/[^\S\n]+/g," ")
+        .replace(/\!\s/g,"!")
+        .replace(/\!+/g,"!")
+        .replace(/\,+/g,",")
+        .replace(/\?+/g,"?")
+        .replace(/[\s]*\?[\s]*/g,"?");
+      input = input.split("?");
+      for (let item in input) {
+        input[item] = input[item].split(" ");
+      }
+      for (let item in input) {
+        input[item] = input[item].filter(filter1);
+      }
+      input = input.filter(filter2);
+      function filter1 (value) {
+        return (value != "!" 
+          && value !="" 
+          && value !=","
+          && value !="!,"
+          && value !=",!");
+      }
+      function filter2 (value) {
+        return (value.length > 0);
+      }
+      if (dataCurrent) {
+        if (input.length < 1) {
+          output.value = dataCurrent.data.join("\n");
+        } else {
+          let toOutput = "";
+          for (let i = 0, n = dataCurrent.samples.length; i < n; i++) {
+            for (let item of input) {
+              let pass = 0;
+              for (let item2 of item) {
+                if (item2.charAt(0) != "!") {
+                  if (dataCurrent.samples[i].indexOf(item2) > -1) {
+                    pass++;
+                  } 
+                } else {
+                  item2 = item2.substring(1);
+                  if (dataCurrent.samples[i].indexOf(item2) < 0) {
+                    pass++;
+                  }
+                }
+              }
+              if (item.length == pass) {
+                toOutput += dataCurrent.data[i] + "\n";
+                break
+              }
+            }
+          }
+          toOutput = toOutput.trim();
+          output.value = toOutput;
+          if (highlight) { glow(document.getElementById("filter")) }
+        }
+      } else {
+        output.value = "";
+      }
+    }
+
+    function resetFilter () {
+      document.getElementById("filter").value = "";
+      dataFilter();
+    }
+
+    function glow (button) {
+      button.style.color = "lime";
+      function restyle () {
+        button.style.transition = "all 1s"
+        button.style.color = "#dadada";
+      }
+      function restyle2 () {
+        button.style.transition = "inherit";
+      }
+      setTimeout(restyle, 200);
+      setTimeout(restyle2, 1000);
+    }
+
+    function copyTo (where, button) {
+      let elmnt = document.getElementById(where),
+        val = elmnt.value.trim(),
+        add = document.getElementById("filteroutput").value.trim();
+      if (val != "") {val = val + "\n"}
+      if (add != "") {add = add + "\n"}
+      if (addRep) {val = ""}
+      elmnt.value = val + add;
+      inputHasChanged = true;
+      glow(button);
+    }
+
     function initialize () {
       document.getElementById("defaulttab").click();
       document.getElementById("adcmrecal").disabled = true;
       document.getElementById("adcrecal").disabled = true;
-      if (document.getElementById("tabsource").value.length > 0 || document.getElementById("tabtarget").value.length > 0 ) {
+      if (document.getElementById("source").value.length > 0 || document.getElementById("target").value.length > 0 ) {
         inputHasChanged = true;
-      } 
+      }
+      document.getElementById("localfiles").value = "";
+      document.getElementById("filteroutput").value = "";
     }
   </script>
 </head>
 <body>
   <nav>
-    <header><a href="https://vahaduo.github.io" target="_blank" title="Open Vahaduo App Gallery">Vahaduo<div>Admixture JS</div></a></header>
-    <button class="tablink" onclick="openTab('tabsource', this)" id="defaulttab">source</button><!--
-    --><button class="tablink" onclick="openTab('tabtarget', this)">target</button><!--
-    --><button class="tablink" onclick="openTab('tabdistance', this);processInput()">distance</button><!--
-    --><button class="tablink" onclick="openTab('tabsingle', this);processInput()">single</button><!--
-    --><button class="tablink" onclick="openTab('tabmulti', this);processInput()">multi</button>  
+    <a id="support" href="https://www.patreon.com/vahaduo" target="_blank" title="Check for updates and support Vahaduo on Patreon"><svg width="1.1em" height="1.1em" viewBox="0 0 96 96" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="bi bi-gear"><path fill-rule="evenodd" d="M -5.76128e-7,2.2693713 H 16.811241 V 94.070099 H -5.76128e-7 Z"></path><path fill-rule="evenodd" d="M 95.999996,36.68187 A 34.751972,34.751972 0 0 1 61.248024,71.433842 34.751972,34.751972 0 0 1 26.496052,36.68187 34.751972,34.751972 0 0 1 61.248024,1.9298973 34.751972,34.751972 0 0 1 95.999996,36.68187 Z"></path></svg></a>
+    <header><a href="https://vahaduo.github.io/" target="_blank" title="Open Vahaduo App Gallery">Vahaduo<div>Admixture JS</div></a></header>
+    <button class="tablink" id="defaulttab" onclick="openTab('data', this)">data</button><!--
+    --><button class="tablink inactive" onclick="openTab('source', this)">source</button><!--
+    --><button class="tablink inactive" onclick="openTab('target', this)">target</button><!--
+    --><button class="tablink inactive" onclick="openTab('distance', this);processInput()">distance</button><!--
+    --><button class="tablink inactive" onclick="openTab('single', this);processInput()">single</button><!--
+    --><button class="tablink inactive" onclick="openTab('multi', this);processInput()">multi</button>  
   </nav>
   <div id="notification" onclick="clearNotification()"></div>
-  <textarea onchange="inputHasChanged = true" class="tab tabinput" id="tabsource" spellcheck="false" placeholder=" Paste data here. Comma-separated values, no header."></textarea>
-  <textarea onchange="inputHasChanged = true" class="tab tabinput" id="tabtarget" spellcheck="false" placeholder=" Paste data here. Comma-separated values, no header."></textarea>
-  <div class="tab" id="tabdistance">
+  <div class="tab" id="data" style="display: none;">
+    <div class="flexcontainer-data">
+      <div class="panel rightpanel">
+        <label for="localfiles" class="buttons button100">
+          Open files<input type="file" name="Open files" multiple="" id="localfiles" onchange="processFiles(this)">
+        </label>
+        <div id="datalist"></div>
+      </div>
+      <div class="panel leftpanel" id="xx">
+        <div class="filteropt">
+          <div class="div-100">
+            <input spellcheck="false" class="buttons input-data" id="filter" value="" placeholder="Type to filter" oninput="dataFilter();">
+            <button class="buttons filterReset" onclick="resetFilter()">×</button>
+          </div>
+          <!-- <button class="buttons" onclick="dataFilter()" id="filterbutton">filter</button> -->
+        </div>
+        <div class="filteropt">
+          <button class="buttons" onclick="toggleOptions('addRep', this)">add&nbsp;to:</button>
+          <button class="buttons" onclick="copyTo('source', this)">source</button>
+          <button class="buttons" onclick="copyTo('target', this)">target</button>
+        </div>
+        <textarea readonly spellcheck="false" class="" id="filteroutput" value="" placeholder="Press 'OPEN FILES' button and select one or multiple files to load CSV spreadsheets.&#10;Lines starting with a comma (headers) will be omitted.&#10;&#10;Press 'Shift' to focus the search field.&#10;Start typing to filter the list of samples.&#10;&#10;Search is case sensitive.&#10;&#10;'Space' - AND&#10;'!' - negation&#10;'?' - OR&#10;'abc def' - abc AND def&#10;'!abc' - NOT abc&#10;'abc !def' - abc AND NOT def&#10;'abc ? def' - abc OR def&#10;'abc def ? ghi' - (abc AND def) OR (ghi)&#10;'abc def ? abc ghi' - (abc AND def) OR (abc AND ghi)&#10;',abc' - starts with abc&#10;'abc,' - ends with abc&#10;'!,abc' - does NOT start with abc&#10;'!abc,' - does NOT end with abc&#10;'abc !def,' - abc AND does NOT end with def"></textarea>
+      </div>
+    </div>
+  </div>
+  <textarea onchange="inputHasChanged = true" class="tab tabinput" id="source" spellcheck="false" placeholder=" Paste data here. Comma-separated values, no header." style="display: block;"></textarea>
+  <textarea onchange="inputHasChanged = true" class="tab tabinput" id="target" spellcheck="false" placeholder=" Paste data here. Comma-separated values, no header." style="display: none;"></textarea>
+  <div class="tab" id="distance" style="display: none;">
     <div class="flexcontainer">
       <div class="panel leftpanel" id="distanceoutput"></div>
       <div class="panel rightpanel">
@@ -1560,30 +1903,30 @@ https://github.com/vahaduo/
           <button class="buttons button20" onclick="clearOutput(this, 'distanceoutput')">ok</button><!--
           --><button class="buttons button80" onclick="clearOutput(this, 'cancel')">cancel</button>
         </div>
-        <button class="buttons button100" onclick="toggleOptions('distMode', this)">mode - single</button>
-        <button class="buttons button80" onclick="this.nextElementSibling.focus()">max output number:</button><!--
+        <button class="buttons button100" onclick="toggleOptions('distMode', this)">mode&nbsp;-&nbsp;single</button>
+        <button class="buttons button80" onclick="this.nextElementSibling.focus()">max&nbsp;output&nbsp;number:</button><!--
         --><input spellcheck="false" class="buttons input20" id="distmaxout" value="25" onblur="validateDistMaxOut(this)">
-        <button class="buttons button100" onclick="toggleOptions('addGradient', this)">add gradient - yes</button>
+        <button class="buttons button100" onclick="toggleOptions('addGradient', this)">add&nbsp;gradient&nbsp;-&nbsp;yes</button>
         <div>
           <div id="gradopts">
-            <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient from:</button><!--
+            <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient&nbsp;from:</button><!--
             --><input spellcheck="false" class="buttons input20" id="gradfrom" value="0" onblur="validateGradFromTo(this)">
-            <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient to:</button><!--
+            <button class="buttons button80" onclick="this.nextElementSibling.focus()">gradient&nbsp;to:</button><!--
             --><input spellcheck="false" class="buttons input20" id="gradto" value="0.2" onblur="validateGradFromTo(this)">
           </div>
           <div id="gradoptsdiff">
-            <button class="buttons button80" onclick="this.nextElementSibling.focus()">diff gradient from:</button><!--
+            <button class="buttons button80" onclick="this.nextElementSibling.focus()">diff&nbsp;gradient&nbsp;from:</button><!--
             --><input spellcheck="false" class="buttons input20" id="gradfromdiff" value="0" onblur="validateGradFromTo(this)">
-            <button class="buttons button80" onclick="this.nextElementSibling.focus()">diff gradient to:</button><!--
+            <button class="buttons button80" onclick="this.nextElementSibling.focus()">diff&nbsp;gradient&nbsp;to:</button><!--
             --><input spellcheck="false" class="buttons input20" id="gradtodiff" value="0.2" onblur="validateGradFromTo(this)">
           </div>
         </div>
-        <button id="runalldist" disabled="true" class="buttons button100" onclick="runAllDist()">run&nbsp;all</button>
+        <button id="runalldist" disabled class="buttons button100" onclick="runAllDist()">run&nbsp;all</button>
         <div id="distancetargets"></div>
       </div>
     </div>
   </div>
-  <div class="tab" id="tabsingle">
+  <div class="tab" id="single" style="display: none;">
     <div class="flexcontainer">
       <div class="panel leftpanel" id="singleoutput"></div>
       <div class="panel rightpanel">
@@ -1595,16 +1938,16 @@ https://github.com/vahaduo/
         --><button class="buttons button100" onclick="toggleOptions('cyclesX', this)">cycles&nbsp;-&nbsp;0.25x</button><!--
         --><button class="buttons button100" onclick="toggleOptions('nPop', this)">reduce&nbsp;-&nbsp;no</button><!--
         --><button class="buttons button100" onclick="toggleOptions('addDistCol', this)">add&nbsp;dist&nbsp;col&nbsp;-&nbsp;no</button><!--
-        --><button id="adcrecal" disabled="true" class="buttons button100" onclick="toggleOptions('addDistColRecal', this)">recalculate&nbsp;-&nbsp;yes</button><!--
+        --><button id="adcrecal" disabled class="buttons button100" onclick="toggleOptions('addDistColRecal', this)">recalculate&nbsp;-&nbsp;yes</button><!--
         --><button class="buttons button100" onclick="toggleOptions('printZeroes', this)">print zeroes&nbsp;-&nbsp;no</button><!--
         --><button class="buttons button100" onclick="toggleOptions('aggregate', this)">aggregate&nbsp;-&nbsp;yes</button><!--
         --><button class="buttons button100" onclick="toggleOptions('addBarChart', this)">add&nbsp;bar&nbsp;chart&nbsp;-&nbsp;mode&nbsp;1</button><!--
-        --><button id="runallsingle" disabled="true" class="buttons button100" onclick="runAllSingle()">run&nbsp;all</button>
+        --><button id="runallsingle" disabled class="buttons button100" onclick="runAllSingle()">run&nbsp;all</button>
         <div id="singletargets"></div>
       </div>
     </div>
   </div>
-  <div class="tab" id="tabmulti">
+  <div class="tab" id="multi" style="display: none;">
     <div class="flexcontainer-nr">
       <div>
         <button class="buttons buttonmulti" onclick="toggleOptions('cyclesXMulti', this)">cycles&nbsp;-&nbsp;0.25x</button><br>
@@ -1612,19 +1955,19 @@ https://github.com/vahaduo/
       </div>
       <div>
         <button class="buttons buttonmulti" onclick="toggleOptions('addDistColMulti', this)">add&nbsp;dist&nbsp;col&nbsp;-&nbsp;no</button><br>
-        <button id="adcmrecal" disabled="true" class="buttons buttonmulti" onclick="toggleOptions('addDistColMultiRecal', this)">recalculate&nbsp;-&nbsp;yes</button>
+        <button id="adcmrecal" disabled class="buttons buttonmulti" onclick="toggleOptions('addDistColMultiRecal', this)">recalculate&nbsp;-&nbsp;yes</button>
       </div>
       <div>
         <button class="buttons buttonmulti" onclick="toggleOptions('printZeroesMulti', this)">print&nbsp;zeroes&nbsp;-&nbsp;no</button><br>
         <button class="buttons buttonmulti" onclick="toggleOptions('aggregateMulti', this)">aggregate&nbsp;-&nbsp;yes</button>
       </div>
       <div>
-        <button class="buttons buttonmulti" onclick="clearOutput(this, 'confirm', 'inline-block')">clear output</button><!--
+        <button class="buttons buttonmulti" onclick="clearOutput(this, 'confirm', 'inline-block')">clear&nbsp;output</button><!--
             --><div style="display: none;"><!--
-              --><button class="buttons multiclearok" onclick="clearOutput(this, 'multioutput', 'inline-block')">ok</button><!--
-              --><button class="buttons multiclearcancel" onclick="clearOutput(this, 'cancel', 'inline-block')">cancel</button><!--
+              --><button class="buttons buttonmulti multiclearok" onclick="clearOutput(this, 'multioutput', 'inline-block')">ok</button><!--
+              --><button class="buttons buttonmulti multiclearcancel" onclick="clearOutput(this, 'cancel', 'inline-block')">cancel</button><!--
             --></div><br>
-        <button id="runmulti" disabled="true" class="buttons buttonmulti" onclick="multiFMC()">run</button>
+        <button id="runmulti" disabled class="buttons buttonmulti" onclick="multiFMC()">run</button>
       </div>
     </div>
     <div id="multioutput"></div>
